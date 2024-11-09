@@ -1,27 +1,27 @@
-## Features (Use Cases)
+# Features (Use Cases)
 - Send messages
 - Receive messages
 - Auth (sign in, sign up)
 
-## Objects (Entities)
+# Entities
 
-# User
-- userID (for database access)
-- user address (randomly generated unique string)
-- username
-- password hash
-- email
+## User
+- String userID           (a unique identifier for the user within the database)
+- String userAddress      (a unique identifier for each user that's publicly displayed like Discord tags)
+- String username
+- String passwordHash
+- String email
 
-# Thread (Chatroom)
-- id
-- name
-- list of users
+## Thread
+- String threadID
+- String name
+- List<User> userList
+- List<Message> messageList
 
-# Message (Abstract)
-- thread id
-- sender (user id)
-- content (of type Text, Image, etc...)
+## Message (Abstract)
+- String threadID
+- String senderID         (the ID of the user that sent the message)
+- Object content          (it's type will change based on the child class)
 
-# TextMessage implements Message
-
-# Text (the content of a TextMessage)
+## TextMessage implements Message
+- String content

@@ -2,13 +2,16 @@ package chat.ping.main.domain.models;
 
 
 public class User {
+
     String userID;
     String userAddress;
     String username;
+    String passwordHash;
     String email;
 
     public User(String username, String password, String email) {
-        // TODO: randomly generate a unique userID and a userAddress
+        // TODO: SpringBoot generate a unique userID and a userAddress
+        // TODO: hash <password> and save it locally in the "passwordHash" instance variable
         this.username = username;
         this.email = email;
     }
@@ -17,8 +20,16 @@ public class User {
         return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getUsername() {
         return username;
+    }
+
+    public void setUsername(String newUsername) {
+        this.username = newUsername;
     }
 
     public String getUserID() {
@@ -27,5 +38,13 @@ public class User {
 
     public String getUserAddress() {
         return userAddress;
+    }
+
+    /**
+     * @param thread is the Thread.
+     * @return True if this User is in this Thread.
+     */
+    public boolean inThread(Thread thread) {
+        return thread.userList.contains(this);
     }
 }
