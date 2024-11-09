@@ -9,7 +9,7 @@
 - userID (for database access)
 - user address (randomly generated unique string)
 - username
-- password hash
+- password hash?
 - email
 
 # Thread (Chatroom)
