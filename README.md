@@ -25,3 +25,78 @@
 
 ## TextMessage implements Message
 - String content
+
+
+## Suggested Project Infrastructure
+~~~arduino
+src
+├── main
+│   ├── java
+│   │   └── com
+│   │       └── example
+│   │           └── messagingapp
+│   │               ├── application
+│   │               │   ├── usecase
+│   │               │   │   ├── auth
+│   │               │   │   │   ├── SignInUseCase.java
+│   │               │   │   │   └── SignUpUseCase.java
+│   │               │   │   └── messaging
+│   │               │   │       ├── SendMessageUseCase.java
+│   │               │   │       └── ReceiveMessageUseCase.java
+│   │               │   ├── service
+│   │               │   │   ├── AuthService.java
+│   │               │   │   └── MessagingService.java
+│   │               │   └── websocket
+│   │               │       └── WebSocketHandler.java
+│   │               ├── domain
+│   │               │   ├── model
+│   │               │   │   ├── User.java
+│   │               │   │   ├── Thread.java
+│   │               │   │   ├── Message.java
+│   │               │   │   └── TextMessage.java
+│   │               │   └── repository
+│   │               │       ├── UserRepository.java
+│   │               │       ├── ThreadRepository.java
+│   │               │       └── MessageRepository.java
+│   │               ├── infrastructure
+│   │               │   ├── persistence
+│   │               │   │   ├── JpaUserRepository.java
+│   │               │   │   ├── JpaThreadRepository.java
+│   │               │   │   ├── JpaMessageRepository.java
+│   │               │   │   └── config
+│   │               │   │       └── PostgresConfig.java
+│   │               │   └── websocket
+│   │               │       └── WebSocketConfig.java
+│   │               ├── presentation
+│   │               │   ├── controller
+│   │               │   │   ├── AuthController.java
+│   │               │   │   ├── MessageController.java
+│   │               │   │   └── HelloWorldController.java
+│   │               │   ├── dto
+│   │               │   │   ├── UserDTO.java
+│   │               │   │   ├── ThreadDTO.java
+│   │               │   │   └── MessageDTO.java
+│   │               │   └── websocket
+│   │               │       └── WebSocketMessageController.java
+│   │               └── config
+│   │                   ├── SecurityConfig.java
+│   │                   └── WebSocketSecurityConfig.java
+│   └── resources
+│       ├── application.properties
+│       └── schema.sql
+└── test
+    └── java
+        └── com
+            └── example
+                └── messagingapp
+                    ├── usecase
+                    │   ├── AuthUseCaseTests.java
+                    │   └── MessagingUseCaseTests.java
+                    ├── controller
+                    │   ├── AuthControllerTests.java
+                    │   ├── MessageControllerTests.java
+                    │   └── HelloWorldControllerTests.java
+                    └── websocket
+                        └── WebSocketHandlerTests.java
+
+~~~
