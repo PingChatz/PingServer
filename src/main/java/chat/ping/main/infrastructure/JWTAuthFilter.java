@@ -1,16 +1,15 @@
 package chat.ping.main.infrastructure;
 
-import chat.ping.main.domain.UserDao;
+
+import chat.ping.main.infrastructure.service.UserDetailsServiceImplementation;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -21,14 +20,15 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JWTAuthFilter extends OncePerRequestFilter
 {
-    private final JWTUtils jwtUtils;
 
-    private final UserDao userDao;
+    private final JWTUtils jwtUtils;
+    private final UserDetailsServiceImplementation userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException
+                                    FilterChain filterChain)
+            throws ServletException, IOException
     {
 
         String authorizationHeader = request.getHeader("Authorization");
@@ -43,13 +43,14 @@ public class JWTAuthFilter extends OncePerRequestFilter
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null)
         {
-            UserDetails userDetails = userDao.findUserByEmail(userEmail);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
             if (jwtUtils.isTokenValid(jwtToken, userEmail))
             {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                var authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }

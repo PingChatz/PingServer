@@ -9,7 +9,7 @@ import java.util.List;
 import static jakarta.persistence.GenerationType.SEQUENCE;
 
 @Entity
-class Thread
+public class MessageThread
 {
     @Id
     @SequenceGenerator(name = "thread_sequence", sequenceName = "thread_sequence", allocationSize = 1)
@@ -32,10 +32,10 @@ class Thread
     private List<Message> messageList;
 
     // Constructors
-    public Thread()
+    public MessageThread()
     {}
 
-    public Thread(String name, List<User> users)
+    public MessageThread(String name, List<User> users)
     {
         // Initialize the values for the messages
         this.threadName = name;

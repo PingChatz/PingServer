@@ -1,7 +1,7 @@
 package chat.ping.main.config;
 
-import chat.ping.main.domain.UserDao;
 import chat.ping.main.infrastructure.JWTAuthFilter;
+import chat.ping.main.infrastructure.service.UserDetailsServiceImplementation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cglib.proxy.NoOp;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +34,7 @@ public class SecurityConfig
 {
 
     private final JWTAuthFilter jwtAuthFilter;
-    private final UserDao userDao;
+    private final UserDetailsServiceImplementation userDetailsService;
 
 
 
@@ -58,7 +58,7 @@ public class SecurityConfig
     public AuthenticationProvider authenticationProvider()
     {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setUserDetailsService(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
@@ -72,21 +72,9 @@ public class SecurityConfig
     @Bean
     public PasswordEncoder passwordEncoder()
     {
-//        return new BCryptPasswordEncoder(); ToDo: Switch to this later
+        //return new BCryptPasswordEncoder();
         return NoOpPasswordEncoder.getInstance();
     }
 
 
-    @Bean
-    public UserDetailsService userDetailsService()
-    {
-        return new UserDetailsService()
-        {
-            @Override
-            public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException
-            {
-                return userDao.findUserByEmail(email);
-            }
-        };
-    }
 }

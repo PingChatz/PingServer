@@ -13,7 +13,7 @@ public class TextMessage extends Message
     public TextMessage()
     {}
 
-    public TextMessage(String content, User sender, Thread thread)
+    public TextMessage(String content, User sender, MessageThread thread)
     {
         super(sender, thread);
         this.content = content;

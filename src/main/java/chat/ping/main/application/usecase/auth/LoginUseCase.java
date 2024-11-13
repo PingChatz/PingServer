@@ -1,5 +1,12 @@
 package chat.ping.main.application.usecase.auth;
 
-public class LoginUseCase
+import chat.ping.main.presentation.dto.LoginRequest;
+import org.springframework.http.ResponseEntity;
+
+/**
+ * Interface to be used by infrastructure layer for Login Use Case.
+ */
+public interface LoginUseCase
 {
+    ResponseEntity<?> execute(LoginRequest loginRequest);
 }
