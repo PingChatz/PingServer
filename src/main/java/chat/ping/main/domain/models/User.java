@@ -1,6 +1,9 @@
 package chat.ping.main.domain.models;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static jakarta.persistence.GenerationType.SEQUENCE;
@@ -24,6 +27,8 @@ public class User
     @Column(name="password_hash", nullable = false)
     private String passwordHash;
 
+    @ManyToMany(mappedBy = "userList", fetch = FetchType.LAZY)
+    private List<Thread> threads;
 
     // Default constructor (required by JPA)
     public User()
@@ -32,9 +37,11 @@ public class User
     // Constructor with fields
     public User(String username, String email, String passwordHash)
     {
+        // Initialize the values
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
+        this.threads = new ArrayList<>();
     }
 
 
