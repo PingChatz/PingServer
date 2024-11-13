@@ -1,5 +1,6 @@
 package chat.ping.main.infrastructure;
 
+import chat.ping.main.domain.UserDao;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,9 +21,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JWTAuthFilter extends OncePerRequestFilter
 {
-    private JWTUtils jwtUtils;
+    private final JWTUtils jwtUtils;
 
-    private UserDetailsService userDetailsService;
+    private final UserDao userDao;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -42,7 +43,7 @@ public class JWTAuthFilter extends OncePerRequestFilter
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null)
         {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            UserDetails userDetails = userDao.findUserByEmail(userEmail);
 
             if (jwtUtils.isTokenValid(jwtToken, userEmail))
             {

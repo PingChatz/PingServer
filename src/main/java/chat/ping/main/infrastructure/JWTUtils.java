@@ -43,6 +43,11 @@ public class JWTUtils
                 .compact();
     }
 
+    public String generateToken(UserDetails userDetails, Map<String, Object> claims)
+    {
+        return createToken(claims, userDetails);
+    }
+
     // Validate the JWT token
     public boolean isTokenValid(String token, String username)
     {
@@ -70,10 +75,10 @@ public class JWTUtils
     }
 
     // Extract all claims from the token
-    private Claims extractAllClaims(String token)
-    {
-        return Jwts.parser()
-                .setSigningKey(jwtSecret)
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret)))
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
