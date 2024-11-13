@@ -30,9 +30,10 @@ public class User
     {}
 
     // Constructor with fields
-    public User(String username, String passwordHash)
+    public User(String username, String email, String passwordHash)
     {
         this.username = username;
+        this.email = email;
         this.passwordHash = passwordHash;
     }
 
