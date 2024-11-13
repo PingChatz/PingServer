@@ -37,6 +37,9 @@ public class LoginUseCaseImplementation implements LoginUseCase
 
         // Generate new token for user
         String jwtToken = jwtUtils.generateToken(userDetails, Map.of());
-        return ResponseEntity.ok(jwtToken);
+
+        // Return the token in a JSON format with "auth_token" as the key
+        Map<String, String> response = Map.of("auth_token", jwtToken);
+        return ResponseEntity.ok(response);
     }
 }
