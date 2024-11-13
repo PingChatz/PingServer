@@ -4,6 +4,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import java.util.Arrays;
@@ -14,15 +15,17 @@ import java.util.List;
 public class UserDao
 {
 
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
     private static final List<UserDetails> APPLICATION_USERS = Arrays.asList(
             new User(
                     "alirahbar2005@gmail.com",
-                    "password",
+                    encoder.encode("password"), // encode the password
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))
             ),
             new User(
                     "alex@gmail.com",
-                    "1230",
+                    encoder.encode("1230"), // encode the password
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
             )
     );
