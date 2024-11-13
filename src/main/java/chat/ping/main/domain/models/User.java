@@ -12,13 +12,18 @@ public class User
     @Id
     @SequenceGenerator(name = "user_sequence", sequenceName = "user_sequence", allocationSize = 1)
     @GeneratedValue(strategy = SEQUENCE, generator = "user_sequence")
+    @Column(name = "user_id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name="username", nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name="email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name="password_hash", nullable = false)
     private String passwordHash;
+
 
     // Default constructor (required by JPA)
     public User()
