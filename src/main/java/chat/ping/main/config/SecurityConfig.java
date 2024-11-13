@@ -72,7 +72,7 @@ public class SecurityConfig
     @Bean
     public PasswordEncoder passwordEncoder()
     {
-//        return new BCryptPasswordEncoder();
+//        return new BCryptPasswordEncoder(); ToDo: Switch to this later
         return NoOpPasswordEncoder.getInstance();
     }
 
