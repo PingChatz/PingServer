@@ -18,15 +18,4 @@ public class MainApplication
 	{
 		SpringApplication.run(MainApplication.class, args);
 	}
-
-	// Code to test my User repository
-	@Bean
-	CommandLineRunner commandLineRunner(UserRepository userRepository)
-	{
-		return args -> {
-//			PasswordEncoder encoder = passwordEncoder();
-			User user = new User("rahbaral", "alirahbar2005@gmail.com", "1230");
-			userRepository.save(user);
-		};
-	}
 }
