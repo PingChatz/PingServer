@@ -27,7 +27,7 @@ public abstract class Message
     @Column(nullable = false)
     private Date timestamp;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "thread_id", nullable = false)
     private MessageThread thread;
 

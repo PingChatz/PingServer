@@ -29,7 +29,8 @@ public class User
     @Column(name="password_hash", nullable = false)
     private String passwordHash;
 
-    @ManyToMany(mappedBy = "userList", fetch = FetchType.LAZY)
+    @Getter
+    @ManyToMany(mappedBy = "participants")
     private List<MessageThread> threads;
 
     // Default constructor (required by JPA)
