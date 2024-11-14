@@ -2,6 +2,7 @@ package chat.ping.main.domain.models;
 
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.util.Date;
 
@@ -25,6 +26,7 @@ public abstract class Message
     private User sender;
 
     @Column(nullable = false)
+    @Getter
     private Date timestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
