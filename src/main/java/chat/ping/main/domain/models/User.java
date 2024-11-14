@@ -34,7 +34,7 @@ public class User
 
     // Default constructor (required by JPA)
     public User()
-    {}
+    { }
 
     // Constructor with fields
     public User(String username, String email, String passwordHash)

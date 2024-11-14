@@ -46,6 +46,7 @@ public class SecurityConfig
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless session
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll() // Public endpoints
+                        .requestMatchers("/api/hello").permitAll() // Public endpoints
                         .anyRequest().authenticated() // All other requests require authentication
                 )
                 .authenticationProvider(authenticationProvider())
