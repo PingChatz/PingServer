@@ -2,31 +2,38 @@ package chat.ping.main.domain.models;
 
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.util.Date;
 
 import static jakarta.persistence.GenerationType.SEQUENCE;
 
+/***
+ * Abstract class for messages in the system.
+ */
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Message
 {
 
     @Id
+    @Getter
     @SequenceGenerator(name = "message_sequence", sequenceName = "message_sequence", allocationSize = 1)
     @GeneratedValue(strategy = SEQUENCE, generator = "message_sequence")
     private Long messageId;
 
+    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
     @Column(nullable = false)
+    @Getter
     private Date timestamp;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "thread_id", nullable = false)
-    private Thread thread;
+    private MessageThread thread;
 
     /**
      *  This is an abstract method that will be implemented by object that extends this.
@@ -38,7 +45,7 @@ public abstract class Message
     public Message()
     {}
 
-    public Message(User sender, Thread thread)
+    public Message(User sender, MessageThread thread)
     {
         this.sender = sender;
         this.timestamp = new Date();
@@ -46,17 +53,3 @@ public abstract class Message
     }
 
 }
-//public abstract class Message {
-//
-//    String threadID;
-//    String senderID;
-//    Object content;
-//
-//    public Message(Object content, Thread thread, User sender) {
-//        this.content = content;
-//        this.threadID = thread.threadID;
-//        this.senderID = sender.getID;
-//    }
-//
-//
-//}
