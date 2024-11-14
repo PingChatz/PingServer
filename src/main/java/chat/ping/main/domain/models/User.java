@@ -19,6 +19,7 @@ public class User
     private Long id;
 
     @Column(name="username", nullable = false, unique = true)
+    @Getter
     private String username;
 
     @Getter

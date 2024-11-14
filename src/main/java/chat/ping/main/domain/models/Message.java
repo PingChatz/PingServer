@@ -17,10 +17,12 @@ public abstract class Message
 {
 
     @Id
+    @Getter
     @SequenceGenerator(name = "message_sequence", sequenceName = "message_sequence", allocationSize = 1)
     @GeneratedValue(strategy = SEQUENCE, generator = "message_sequence")
     private Long messageId;
 
+    @Getter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;

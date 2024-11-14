@@ -23,6 +23,7 @@ public class MessageThread
     @Column(name = "thread_name", nullable = false)
     private String threadName;
 
+    @Getter
     @ManyToMany
     @JoinTable(
             name = "thread_participants",
