@@ -29,11 +29,9 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
             throw new UserAlreadyExistsException("Username is already taken.");
         }
 
-        try {
-            PasswordValidator.isValid(requestModel.getPassword());
-        } catch (InvalidPasswordException e) {
-            throw new IllegalArgumentException("Password validation failed: " + e.getMessage());
-        }
+        // run to make sure password is valid
+        PasswordValidator.isValid(requestModel.getPassword());
+
 
         User newUser = userFactory.createUser(
                 requestModel.getEmail(),
