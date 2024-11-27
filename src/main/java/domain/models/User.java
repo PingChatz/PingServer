@@ -1,14 +1,16 @@
-package chat.ping.main.domain.models;
+package domain.models;
+
 
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static jakarta.persistence.GenerationType.SEQUENCE;
 
 
+/**
+ * User entity.
+ * Used to handle user objects as well as communicate with db.
+ */
 @Entity(name="User")
 public class User
 {
@@ -30,10 +32,6 @@ public class User
     @Column(name="password_hash", nullable = false)
     private String passwordHash;
 
-    @Getter
-    @ManyToMany(mappedBy = "participants")
-    private List<MessageThread> threads;
-
     // Default constructor (required by JPA)
     public User()
     { }
@@ -45,8 +43,6 @@ public class User
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.threads = new ArrayList<>();
     }
-
 
 }

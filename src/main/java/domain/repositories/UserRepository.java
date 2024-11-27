@@ -1,11 +1,11 @@
-package chat.ping.main.domain.repositories;
+package domain.repositories;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import chat.ping.main.domain.models.User;
+import domain.models.User;
 
 /**
  * User repository is the interface used to access the user model.
