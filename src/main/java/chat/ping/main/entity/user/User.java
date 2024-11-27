@@ -9,10 +9,11 @@ public class User
     private final String password;
 
     // Constructor
-    public User(String username, String password, String email)
+    public User(String email, String username, String password)
     {
+        this.email = email;
         this.username = username;
         this.password = password;
-        this.email = email;
+
     }
 }
