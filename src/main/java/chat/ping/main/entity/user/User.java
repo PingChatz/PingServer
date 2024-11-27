@@ -2,17 +2,17 @@ package chat.ping.main.entity.user;
 
 public class User
 {
-    private String username;
-    private String password;
 
-    public User(String username, String password)
+    // properties
+    private final String email;
+    private final String username;
+    private final String password;
+
+    // Constructor
+    public User(String username, String password, String email)
     {
         this.username = username;
         this.password = password;
-    }
-
-    public boolean isPasswordValid()
-    {
-        return password != null && password.length() > 5;
+        this.email = email;
     }
 }
