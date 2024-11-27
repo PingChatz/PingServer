@@ -1,7 +1,9 @@
 package chat.ping.main.infrastructure.auth.gateway;
 
 import chat.ping.main.entity.user.User;
+import org.springframework.stereotype.Component;
 
+@Component
 public class JpaUserGateway implements UserAuthDsGateway
 {
     private final JpaUserRepository userRepository;

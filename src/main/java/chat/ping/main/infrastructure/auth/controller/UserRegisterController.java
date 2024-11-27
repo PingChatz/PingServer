@@ -3,6 +3,7 @@ package chat.ping.main.infrastructure.auth.controller;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
 import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 import chat.ping.main.usecase.auth.register.UserRegisterInputBoundary;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ public class UserRegisterController
 {
     private final UserRegisterInputBoundary userRegisterInputBoundary;
 
+    @Autowired
     public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary)
     {
         this.userRegisterInputBoundary = userRegisterInputBoundary;

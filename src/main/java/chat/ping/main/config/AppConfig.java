@@ -1,4 +1,4 @@
-package chat.ping.main.application.config;
+package chat.ping.main.config;
 
 
 import chat.ping.main.entity.user.UserFactory;

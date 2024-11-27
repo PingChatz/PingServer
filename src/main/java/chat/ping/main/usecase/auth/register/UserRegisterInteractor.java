@@ -2,6 +2,7 @@ package chat.ping.main.usecase.auth.register;
 
 import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.user.UserFactory;
+import chat.ping.main.entity.user.exception.InvalidPasswordException;
 import chat.ping.main.entity.user.exception.UserAlreadyExistsException;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.shared.validation.PasswordValidator;
@@ -24,27 +25,23 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     @Override
     public UserRegisterResponseModel register(UserRegisterRequestModel requestModel)
     {
-        // Check if user already exists
         if (userAuthDsGateway.existsByUsername(requestModel.getUsername())) {
             throw new UserAlreadyExistsException("Username is already taken.");
         }
 
-        // Validate password
-        if (!PasswordValidator.isValid(requestModel.getPassword())) {
-            throw new IllegalArgumentException("Password does not meet validation criteria.");
+        try {
+            PasswordValidator.isValid(requestModel.getPassword());
+        } catch (InvalidPasswordException e) {
+            throw new IllegalArgumentException("Password validation failed: " + e.getMessage());
         }
 
-        // Create a new user
         User newUser = userFactory.createUser(
                 requestModel.getEmail(),
                 requestModel.getUsername(),
                 requestModel.getPassword()
         );
 
-        // Save the user to the repository
         userAuthDsGateway.save(newUser);
-
-        // Return response through the presenter
         return presenter.prepareSuccessView(newUser);
     }
 }
