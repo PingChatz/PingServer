@@ -25,8 +25,15 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     @Override
     public UserRegisterResponseModel register(UserRegisterRequestModel requestModel)
     {
+        // make sure username us unique
         if (userAuthDsGateway.existsByUsername(requestModel.getUsername())) {
             throw new UserAlreadyExistsException("Username is already taken.");
+        }
+
+        // make sure email is unique
+        if (userAuthDsGateway.existsByEmail(requestModel.getEmail()))
+        {
+            throw new UserAlreadyExistsException("Email is already taken.");
         }
 
         // run to make sure password is valid

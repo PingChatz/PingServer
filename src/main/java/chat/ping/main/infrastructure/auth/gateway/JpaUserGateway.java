@@ -20,6 +20,12 @@ public class JpaUserGateway implements UserAuthDsGateway
     }
 
     @Override
+    public boolean existsByEmail(String email)
+    {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
     public void save(User user)
     {
         UserDataMapper userDataMapper = new UserDataMapper(user.getEmail(), user.getUsername(), user.getPassword());
