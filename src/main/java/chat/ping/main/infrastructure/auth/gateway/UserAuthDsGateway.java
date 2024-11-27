@@ -1,5 +1,11 @@
 package chat.ping.main.infrastructure.auth.gateway;
 
-public class UserAuthDsGateway
+
+import chat.ping.main.entity.user.User;
+
+public interface UserAuthDsGateway
 {
+    boolean existsByUsername(String username);
+
+    void save(User user);
 }
