@@ -20,8 +20,7 @@ public class InvalidPasswordHandler
     {
         ErrorResponse errorResponse = new ErrorResponse(
                 "Invalid Password",
-                ex.getMessage(),
-                HttpStatus.UNAUTHORIZED.value()
+                ex.getMessage()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }

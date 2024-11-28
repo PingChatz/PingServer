@@ -4,13 +4,11 @@ public class ErrorResponse
 {
     private String error;
     private String message;
-    private int status;
 
-    public ErrorResponse(String error, String message, int status)
+    public ErrorResponse(String error, String message)
     {
         this.error = error;
         this.message = message;
-        this.status = status;
     }
 
     // Getters and Setters
@@ -28,13 +26,5 @@ public class ErrorResponse
 
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
     }
 }

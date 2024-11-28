@@ -18,8 +18,7 @@ public class UserAlreadyExistsHandler
     {
         ErrorResponse errorResponse = new ErrorResponse(
                 "UserAlreadyExists",
-                ex.getMessage(),
-                HttpStatus.CONFLICT.value()
+                ex.getMessage()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
