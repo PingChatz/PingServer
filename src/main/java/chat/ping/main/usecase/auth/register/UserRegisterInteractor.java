@@ -2,20 +2,20 @@ package chat.ping.main.usecase.auth.register;
 
 import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.user.UserFactory;
-import chat.ping.main.entity.user.exception.UserAlreadyExistsException;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.security.exception.InvalidPasswordException;
+import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.shared.validation.PasswordValidator;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
-import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 
 public class UserRegisterInteractor implements UserRegisterInputBoundary
 {
     private final UserAuthDsGateway userAuthDsGateway;
-    private final UserRegisterPresenter presenter;
+    private final UserRegisterOutputBoundary presenter;
     private final UserFactory userFactory;
 
     public UserRegisterInteractor(UserAuthDsGateway userAuthDsGateway,
-                                  UserRegisterPresenter presenter,
+                                  UserRegisterOutputBoundary presenter,
                                   UserFactory userFactory)
     {
         this.userAuthDsGateway = userAuthDsGateway;
@@ -24,22 +24,40 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     }
 
     @Override
-    public UserRegisterResponseModel register(UserRegisterRequestModel requestModel)
+    public void register(UserRegisterRequestModel requestModel)
     {
         // make sure username us unique
         if (userAuthDsGateway.existsByUsername(requestModel.getUsername()))
         {
-            throw new UserAlreadyExistsException("Username is already taken.");
+            presenter.prepareUsernameAlreadyExistsView(requestModel.getUsername());
+            return;
         }
 
         // make sure email is unique
         if (userAuthDsGateway.existsByEmail(requestModel.getEmail()))
         {
-            throw new UserAlreadyExistsException("Email is already taken.");
+            presenter.prepareEmailAlreadyExistsView(requestModel.getEmail());
+            return;
         }
 
-        // run to make sure password is valid
-        PasswordValidator.isValid(requestModel.getPassword());
+        // Validate the email format
+        if (!EmailValidator.isValid(requestModel.getEmail()))
+        {
+            presenter.prepareInvalidEmailFormatView(requestModel.getEmail());
+            return;
+        }
+
+
+        // Validate the password
+        try
+        {
+            PasswordValidator.isValid(requestModel.getPassword());
+
+        } catch (InvalidPasswordException e)
+        {
+            presenter.prepareInvalidPasswordView(e.getMessage());
+            return;
+        }
 
         User newUser = userFactory.createUser(
                 requestModel.getEmail(),
@@ -48,6 +66,8 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
         );
 
         userAuthDsGateway.save(newUser);
-        return presenter.prepareSuccessView(newUser);
+
+        // Prepare the success view
+        presenter.prepareSuccessView(newUser);
     }
 }

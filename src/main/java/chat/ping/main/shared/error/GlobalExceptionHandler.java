@@ -1,7 +1,5 @@
 package chat.ping.main.shared.error;
 
-
-import chat.ping.main.entity.user.exception.InvalidCredentialsException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -13,16 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler
 {
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex)
-    {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "InvalidCredentials",
-                ex.getMessage()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse errorResponse = new ErrorResponse(

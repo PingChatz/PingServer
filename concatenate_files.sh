@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the target directory
-target_directory="/Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/"
+target_directory="/Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main"
 
 # Define the output file
 output_file="all_code.txt"

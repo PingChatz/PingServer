@@ -1,6 +1,5 @@
 package chat.ping.main.infrastructure.security;
 
-import chat.ping.main.entity.user.exception.UserNotFoundException;
 import chat.ping.main.infrastructure.auth.gateway.JpaUserRepository;
 import chat.ping.main.infrastructure.auth.gateway.UserDataMapper;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,7 +30,7 @@ public class UserDetailsServiceImplementation implements UserDetailsService {
     {
         // Attempt to find user by username or email
         UserDataMapper user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found with Username: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with Username: " + username));
 
         // Return UserDetails object expected by Spring Security
         return User.builder()

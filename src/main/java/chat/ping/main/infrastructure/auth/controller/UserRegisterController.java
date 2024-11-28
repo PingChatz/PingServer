@@ -1,5 +1,6 @@
 package chat.ping.main.infrastructure.auth.controller;
 
+import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
 import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 import chat.ping.main.usecase.auth.register.UserRegisterInputBoundary;
@@ -15,18 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserRegisterController
 {
     private final UserRegisterInputBoundary userRegisterInputBoundary;
+    private final UserRegisterPresenter presenter;
 
     @Autowired
-    public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary)
+    public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary,
+                                  UserRegisterPresenter presenter)
     {
         this.userRegisterInputBoundary = userRegisterInputBoundary;
+        this.presenter = presenter;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserRegisterResponseModel> register(@RequestBody UserRegisterRequestModel requestModel)
+    public ResponseEntity<?> register(@RequestBody UserRegisterRequestModel requestModel)
     {
-        UserRegisterResponseModel response = userRegisterInputBoundary.register(requestModel);
+        userRegisterInputBoundary.register(requestModel);
 
-        return ResponseEntity.ok(response);
+        return presenter.getResponseEntity();
     }
 }

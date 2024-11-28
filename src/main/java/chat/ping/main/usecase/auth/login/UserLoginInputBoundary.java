@@ -5,5 +5,5 @@ import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 
 public interface UserLoginInputBoundary
 {
-    UserLoginResponseModel login(UserLoginRequestModel requestModel);
+    void login(UserLoginRequestModel requestModel);
 }
