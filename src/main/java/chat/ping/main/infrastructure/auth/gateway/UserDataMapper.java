@@ -35,4 +35,25 @@ public class UserDataMapper
         this.username = username;
         this.passwordHash = passwordHash;
     }
+
+    public Long getId()
+    {
+        return id;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public String getPasswordHash()
+    {
+        return passwordHash;
+    }
+
 }
