@@ -27,76 +27,79 @@
 - String content
 
 
-## Suggested Project Infrastructure
+## Suggested Project Infrastructure (Clean Architecture)
 ~~~arduino
-src
-├── main
-│   ├── java
-│   │   └── com
-│   │       └── example
-│   │           └── messagingapp
-│   │               ├── application
-│   │               │   ├── usecase
-│   │               │   │   ├── auth
-│   │               │   │   │   ├── SignInUseCase.java
-│   │               │   │   │   └── SignUpUseCase.java
-│   │               │   │   └── messaging
-│   │               │   │       ├── SendMessageUseCase.java
-│   │               │   │       └── ReceiveMessageUseCase.java
-│   │               │   ├── service
-│   │               │   │   ├── AuthService.java
-│   │               │   │   └── MessagingService.java
-│   │               │   └── websocket
-│   │               │       └── WebSocketHandler.java
-│   │               ├── domain
-│   │               │   ├── model
-│   │               │   │   ├── User.java
-│   │               │   │   ├── Thread.java
-│   │               │   │   ├── Message.java
-│   │               │   │   └── TextMessage.java
-│   │               │   └── repository
-│   │               │       ├── UserRepository.java
-│   │               │       ├── ThreadRepository.java
-│   │               │       └── MessageRepository.java
-│   │               ├── infrastructure
-│   │               │   ├── persistence
-│   │               │   │   ├── JpaUserRepository.java
-│   │               │   │   ├── JpaThreadRepository.java
-│   │               │   │   ├── JpaMessageRepository.java
-│   │               │   │   └── config
-│   │               │   │       └── PostgresConfig.java
-│   │               │   └── websocket
-│   │               │       └── WebSocketConfig.java
-│   │               ├── presentation
-│   │               │   ├── controller
-│   │               │   │   ├── AuthController.java
-│   │               │   │   ├── MessageController.java
-│   │               │   │   └── HelloWorldController.java
-│   │               │   ├── dto
-│   │               │   │   ├── UserDTO.java
-│   │               │   │   ├── ThreadDTO.java
-│   │               │   │   └── MessageDTO.java
-│   │               │   └── websocket
-│   │               │       └── WebSocketMessageController.java
-│   │               └── config
-│   │                   ├── SecurityConfig.java
-│   │                   └── WebSocketSecurityConfig.java
-│   └── resources
-│       ├── application.properties
-│       └── schema.sql
-└── test
-    └── java
-        └── com
-            └── example
-                └── messagingapp
-                    ├── usecase
-                    │   ├── AuthUseCaseTests.java
-                    │   └── MessagingUseCaseTests.java
-                    ├── controller
-                    │   ├── AuthControllerTests.java
-                    │   ├── MessageControllerTests.java
-                    │   └── HelloWorldControllerTests.java
-                    └── websocket
-                        └── WebSocketHandlerTests.java
+project-root/
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── com.example.project/
+│   │   │   │   ├── entity/
+│   │   │   │   │   ├── auth/
+│   │   │   │   │   │   ├── User.java
+│   │   │   │   │   │   ├── UserFactory.java
+│   │   │   │   │   │   ├── exception/
+│   │   │   │   │   │   │   ├── UserAlreadyExistsException.java
+│   │   │   │   │   │   │   ├── InvalidPasswordException.java
+│   │   │   │   │   │   │   └── InvalidCredentialsException.java
+│   │   │   │   ├── usecase/
+│   │   │   │   │   ├── auth/
+│   │   │   │   │   │   ├── dto/
+│   │   │   │   │   │   │   ├── UserRegisterRequestModel.java
+│   │   │   │   │   │   │   ├── UserRegisterResponseModel.java
+│   │   │   │   │   │   │   ├── UserLoginRequestModel.java
+│   │   │   │   │   │   │   ├── UserLoginResponseModel.java
+│   │   │   │   │   │   ├── register/
+│   │   │   │   │   │   │   ├── UserRegisterInteractor.java
+│   │   │   │   │   │   │   ├── UserRegisterInputBoundary.java
+│   │   │   │   │   │   │   ├── UserRegisterPresenter.java
+│   │   │   │   │   │   ├── login/
+│   │   │   │   │   │   │   ├── UserLoginInteractor.java
+│   │   │   │   │   │   │   ├── UserLoginInputBoundary.java
+│   │   │   │   │   │   │   ├── UserLoginPresenter.java
+│   │   │   │   ├── infrastructure/
+│   │   │   │   │   ├── auth/
+│   │   │   │   │   │   ├── controller/
+│   │   │   │   │   │   │   ├── UserRegisterController.java
+│   │   │   │   │   │   │   ├── UserLoginController.java
+│   │   │   │   │   │   ├── gateway/
+│   │   │   │   │   │   │   ├── UserAuthDsGateway.java
+│   │   │   │   │   │   │   ├── JpaUserRepository.java
+│   │   │   │   │   │   │   ├── UserDataMapper.java
+│   │   │   │   │   │   │   └── JpaUserGateway.java
+│   │   │   │   │   │   └── formatter/
+│   │   │   │   │   │       ├── UserRegisterResponseFormatter.java
+│   │   │   │   │   │       ├── UserLoginResponseFormatter.java
+│   │   │   │   │   │       └── exception/
+│   │   │   │   │   │           └── ResponseExceptionHandler.java
+│   │   │   │   ├── application/
+│   │   │   │   │   ├── config/
+│   │   │   │   │   │   ├── AppConfig.java
+│   │   │   │   │   └── main/
+│   │   │   │   │       ├── CleanArchitectureApplication.java
+│   │   │   │   └── shared/
+│   │   │   │       ├── validation/
+│   │   │   │       │   ├── PasswordValidator.java
+│   │   │   │       │   ├── CredentialsValidator.java
+│   │   │   │       │   └── UniqueUsernameValidator.java
+│   │   │   │       └── util/
+│   │   │   │           ├── DateFormatter.java
+│   │   │   │           └── JsonUtil.java
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       ├── db/
+│   │       │   ├── schema.sql
+│   │       │   └── data.sql
+│   │       └── messages/
+│   │           └── validation_messages.properties
+│   ├── test/
+│       ├── java/
+│       │   ├── com.example.project/
+│       │   │   ├── entity/
+│       │   │   ├── usecase/
+│       │   │   ├── infrastructure/
+│       │   │   └── shared/
+
 
 ~~~
