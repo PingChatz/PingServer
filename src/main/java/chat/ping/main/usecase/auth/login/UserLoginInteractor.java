@@ -15,12 +15,12 @@ public class UserLoginInteractor implements UserLoginInputBoundary
 {
     private final UserAuthDsGateway userAuthDsGateway;
     private final PasswordEncoder passwordEncoder;
-    private final UserLoginPresenter presenter;
+    private final UserLoginOutputBoundary presenter;
     private final JWTUtils jwtUtils;
 
     public UserLoginInteractor(UserAuthDsGateway userAuthDsGateway,
                                PasswordEncoder passwordEncoder,
-                               UserLoginPresenter presenter,
+                               UserLoginOutputBoundary presenter,
                                JWTUtils jwtUtils)
     {
         this.userAuthDsGateway = userAuthDsGateway;
@@ -30,35 +30,35 @@ public class UserLoginInteractor implements UserLoginInputBoundary
     }
 
     @Override
-    public UserLoginResponseModel login(UserLoginRequestModel requestModel)
+    public void login(UserLoginRequestModel requestModel)
     {
         // identify if the login is being done by the username or password
         String usernameOrEmail = requestModel.getUsernameOrEmail();
 
-        User user;
-        // if it is an email
-        if (EmailValidator.isValid(usernameOrEmail))
-        {
-            // then it must be an email
-            user = userAuthDsGateway.findByEmail(requestModel.getUsernameOrEmail())
-                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
+        // Fetch user by email or username
+        User user = fetchUserByUsernameOrEmail(usernameOrEmail);
 
-        } else
-        {
-            user = userAuthDsGateway.findByUsername(requestModel.getUsernameOrEmail())
-                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
-        }
-
-        // Verify Password
+        // Validate the password
         if (!passwordEncoder.matches(requestModel.getPassword(), user.getPasswordHash())) {
-            throw new InvalidCredentialsException("Invalid username/email or password.");
+            presenter.prepareInvalidCredentialsView("Invalid username/email or password.");
+            return;
         }
 
         // Generate JWT token
         String authToken = jwtUtils.generateToken(user.getUsername(), Map.of());
 
-        // return the success view
-        return presenter.prepareSuccessView(user, authToken);
+        // Prepare the success response
+        presenter.prepareSuccessView(authToken, user.getUsername());
+    }
+
+    private User fetchUserByUsernameOrEmail(String usernameOrEmail) {
+        if (EmailValidator.isValid(usernameOrEmail)) {
+            return userAuthDsGateway.findByEmail(usernameOrEmail)
+                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
+        } else {
+            return userAuthDsGateway.findByUsername(usernameOrEmail)
+                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
+        }
     }
 
 }

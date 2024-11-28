@@ -111,7 +111,6 @@ import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.infrastructure.security.JWTUtils;
 import chat.ping.main.usecase.auth.login.UserLoginInteractor;
-import chat.ping.main.usecase.auth.login.UserLoginPresenter;
 import chat.ping.main.usecase.auth.register.UserRegisterInteractor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -202,54 +201,6 @@ public class User
 }
 
 
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/entity/user/exception/UserNotFoundException.java =====
-package chat.ping.main.entity.user.exception;
-
-public class UserNotFoundException extends RuntimeException
-{
-    public UserNotFoundException(String message)
-    {
-        super(message);
-    }
-}
-
-
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/entity/user/exception/InvalidCredentialsException.java =====
-package chat.ping.main.entity.user.exception;
-
-public class InvalidCredentialsException extends RuntimeException
-{
-    public InvalidCredentialsException(String message)
-    {
-        super(message);
-    }
-}
-
-
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/entity/user/exception/UserAlreadyExistsException.java =====
-package chat.ping.main.entity.user.exception;
-
-public class UserAlreadyExistsException extends RuntimeException
-{
-    public UserAlreadyExistsException(String message)
-    {
-        super(message);
-    }
-}
-
-
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/entity/user/exception/InvalidPasswordException.java =====
-package chat.ping.main.entity.user.exception;
-
-public class InvalidPasswordException extends RuntimeException
-{
-    public InvalidPasswordException(String message)
-    {
-        super(message);
-    }
-}
-
-
 ===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/entity/user/UserFactory.java =====
 package chat.ping.main.entity.user;
 
@@ -292,8 +243,6 @@ public class DateFormatter
 ===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/shared/error/GlobalExceptionHandler.java =====
 package chat.ping.main.shared.error;
 
-
-import chat.ping.main.entity.user.exception.InvalidCredentialsException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -305,16 +254,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler
 {
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex)
-    {
-        ErrorResponse errorResponse = new ErrorResponse(
-                "InvalidCredentials",
-                ex.getMessage()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -717,6 +656,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRegisterPresenter implements UserRegisterOutputBoundary
 {
+
     private ResponseEntity<?> responseEntity;
 
     @Override
@@ -731,15 +671,19 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
 
     @Override
     public void prepareUsernameAlreadyExistsView(String username) {
-        ErrorResponse errorResponse = new ErrorResponse("UsernameAlreadyExists",
-                "The username '" + username + "' is already taken.");
+        ErrorResponse errorResponse = new ErrorResponse(
+                "UsernameAlreadyExists",
+                "The username '" + username + "' is already taken."
+        );
         this.responseEntity = ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @Override
     public void prepareEmailAlreadyExistsView(String email) {
-        ErrorResponse errorResponse = new ErrorResponse("EmailAlreadyExists",
-                "The email '" + email + "' is already registered.");
+        ErrorResponse errorResponse = new ErrorResponse(
+                "EmailAlreadyExists",
+                "The email '" + email + "' is already registered."
+        );
         this.responseEntity = ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
@@ -751,38 +695,48 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
 
     @Override
     public void prepareInvalidEmailFormatView(String email) {
-        ErrorResponse errorResponse = new ErrorResponse("InvalidEmailFormat",
-                "The email '" + email + "' is not in a valid format.");
+        ErrorResponse errorResponse = new ErrorResponse(
+                "InvalidEmailFormat",
+                "The email '" + email + "' is not in a valid format."
+        );
         this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    public ResponseEntity<?> getResponseEntity()
-    {
+    public ResponseEntity<?> getResponseEntity() {
         return responseEntity;
     }
-
 }
 
 
 ===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/infrastructure/auth/presenter/UserLoginPresenter.java =====
 package chat.ping.main.infrastructure.auth.presenter;
 
+import chat.ping.main.shared.error.ErrorResponse;
 import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 import chat.ping.main.usecase.auth.login.UserLoginOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 public class UserLoginPresenter implements UserLoginOutputBoundary
 {
-
+    private ResponseEntity<?> responseEntity;
 
     @Override
-    public void prepareSuccessView(UserLoginResponseModel responseModel, String successmessage) {
-        UserLoginResponseModel userLoginResponseModel = new UserLoginResponseModel();
+    public void prepareSuccessView(String authToken, String username)
+    {
 
+        UserLoginResponseModel userLoginResponseModel = new UserLoginResponseModel(authToken,
+                 username, "Login Successful!");
+
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(userLoginResponseModel);
     }
 
     @Override
-    public void invalidCredentials(String errorMessage) {
-
+    public void prepareInvalidCredentialsView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials", "Login Unsuccessful " +
+                "due to invalid credentials");
+        this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 
     }
 }
@@ -843,17 +797,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserRegisterController
 {
     private final UserRegisterInputBoundary userRegisterInputBoundary;
+    private final UserRegisterPresenter presenter;
 
     @Autowired
-    public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary)
+    public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary,
+                                  UserRegisterPresenter presenter)
     {
         this.userRegisterInputBoundary = userRegisterInputBoundary;
+        this.presenter = presenter;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserRegisterResponseModel> register(@RequestBody UserRegisterRequestModel requestModel)
+    public ResponseEntity<?> register(@RequestBody UserRegisterRequestModel requestModel)
     {
-        UserRegisterPresenter presenter = userRegisterInputBoundary.register(requestModel);
+        userRegisterInputBoundary.register(requestModel);
 
         return presenter.getResponseEntity();
     }
@@ -1212,22 +1169,6 @@ public interface UserRegisterOutputBoundary
 }
 
 
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/usecase/auth/register/UserRegisterPresenter.java =====
-//package chat.ping.main.usecase.auth.register;
-//
-//
-//import chat.ping.main.entity.user.User;
-//import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
-//
-//public class UserRegisterPresenter
-//{
-//    public UserRegisterResponseModel prepareSuccessView(User user)
-//    {
-//        return new UserRegisterResponseModel(user.getUsername(), "User registered successfully!");
-//    }
-//}
-
-
 ===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/usecase/auth/register/exceptionHandler/UserAlreadyExistsHandler.java =====
 package chat.ping.main.usecase.auth.register.exceptionHandler;
 
@@ -1294,6 +1235,7 @@ import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.user.UserFactory;
 import chat.ping.main.entity.user.exception.UserAlreadyExistsException;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.shared.validation.PasswordValidator;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
 import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
@@ -1314,22 +1256,39 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     }
 
     @Override
-    public UserRegisterResponseModel register(UserRegisterRequestModel requestModel)
+    public void register(UserRegisterRequestModel requestModel)
     {
         // make sure username us unique
         if (userAuthDsGateway.existsByUsername(requestModel.getUsername()))
         {
-            throw new UserAlreadyExistsException("Username is already taken.");
+            presenter.prepareUsernameAlreadyExistsView(requestModel.getUsername());
+            return;
         }
 
         // make sure email is unique
         if (userAuthDsGateway.existsByEmail(requestModel.getEmail()))
         {
-            throw new UserAlreadyExistsException("Email is already taken.");
+            presenter.prepareEmailAlreadyExistsView(requestModel.getEmail());
+            return;
         }
 
-        // run to make sure password is valid
-        PasswordValidator.isValid(requestModel.getPassword());
+        // Validate the email format
+        if (!EmailValidator.isValid(requestModel.getEmail()))
+        {
+            presenter.prepareInvalidEmailFormatView(requestModel.getEmail());
+            return;
+        }
+
+
+        // Validate the password
+        try
+        {
+            PasswordValidator.isValid(requestModel.getPassword());
+        } catch (IllegalArgumentException e)
+        {
+            presenter.prepareInvalidPasswordView(e.getMessage());
+            return;
+        }
 
         User newUser = userFactory.createUser(
                 requestModel.getEmail(),
@@ -1338,7 +1297,9 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
         );
 
         userAuthDsGateway.save(newUser);
-        return presenter;
+
+        // Prepare the success view
+        presenter.prepareSuccessView(newUser);
     }
 }
 
@@ -1351,7 +1312,7 @@ import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 
 public interface UserRegisterInputBoundary
 {
-    UserRegisterResponseModel register(UserRegisterRequestModel requestModel);
+    void register(UserRegisterRequestModel requestModel);
 }
 
 
@@ -1363,7 +1324,7 @@ import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 
 public interface UserLoginInputBoundary
 {
-    UserLoginResponseModel login(UserLoginRequestModel requestModel);
+    void login(UserLoginRequestModel requestModel);
 }
 
 
@@ -1374,9 +1335,9 @@ import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 
 public interface UserLoginOutputBoundary
 {
-    void prepareSuccessView(UserLoginResponseModel responseModel,String successmessage);
+    void prepareSuccessView(String authToken,String username);
 
-    void invalidCredentials(String errorMessage);
+    void prepareInvalidCredentialsView(String errorMessage);
 }
 
 
@@ -1442,7 +1403,6 @@ import chat.ping.main.infrastructure.security.JWTUtils;
 import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
 import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
-import chat.ping.main.usecase.auth.register.UserRegisterPresenter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Map;
 
@@ -1451,12 +1411,12 @@ public class UserLoginInteractor implements UserLoginInputBoundary
 {
     private final UserAuthDsGateway userAuthDsGateway;
     private final PasswordEncoder passwordEncoder;
-    private final UserLoginPresenter presenter;
+    private final UserLoginOutputBoundary presenter;
     private final JWTUtils jwtUtils;
 
     public UserLoginInteractor(UserAuthDsGateway userAuthDsGateway,
                                PasswordEncoder passwordEncoder,
-                               UserLoginPresenter presenter,
+                               UserLoginOutputBoundary presenter,
                                JWTUtils jwtUtils)
     {
         this.userAuthDsGateway = userAuthDsGateway;
@@ -1466,7 +1426,7 @@ public class UserLoginInteractor implements UserLoginInputBoundary
     }
 
     @Override
-    public UserLoginResponseModel login(UserLoginRequestModel requestModel)
+    public void login(UserLoginRequestModel requestModel)
     {
         // identify if the login is being done by the username or password
         String usernameOrEmail = requestModel.getUsernameOrEmail();
@@ -1497,27 +1457,6 @@ public class UserLoginInteractor implements UserLoginInputBoundary
         return presenter.prepareSuccessView(user, authToken);
     }
 
-}
-
-
-===== /Users/mg/IdeaProjects/PingServer/src/main/java/chat/ping/main/usecase/auth/login/UserLoginPresenter.java =====
-package chat.ping.main.usecase.auth.login;
-
-import chat.ping.main.entity.user.User;
-import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
-import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
-
-public class UserLoginPresenter
-{
-
-    public UserLoginResponseModel prepareSuccessView(User user, String authToken)
-    {
-        return new UserLoginResponseModel(
-                authToken,
-                user.getUsername(),
-                "Login successful"
-                );
-    }
 }
 
 

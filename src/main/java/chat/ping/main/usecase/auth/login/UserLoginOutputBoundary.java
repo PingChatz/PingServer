@@ -4,7 +4,7 @@ import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 
 public interface UserLoginOutputBoundary
 {
-    void prepareSuccessView(UserLoginResponseModel responseModel,String successmessage);
+    void prepareSuccessView(String authToken,String username);
 
-    void invalidCredentials(String errorMessage);
+    void prepareInvalidCredentialsView(String errorMessage);
 }
