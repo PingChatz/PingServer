@@ -7,7 +7,6 @@ import chat.ping.main.infrastructure.security.JWTUtils;
 import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
 import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
-import chat.ping.main.usecase.auth.register.UserRegisterPresenter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Map;
 
