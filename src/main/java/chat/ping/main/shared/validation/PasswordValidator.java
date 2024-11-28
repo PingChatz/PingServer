@@ -1,7 +1,6 @@
 package chat.ping.main.shared.validation;
 
-import chat.ping.main.entity.user.exception.InvalidPasswordException;
-
+import chat.ping.main.infrastructure.security.exception.InvalidPasswordException;
 import java.util.regex.Pattern;
 
 public class PasswordValidator

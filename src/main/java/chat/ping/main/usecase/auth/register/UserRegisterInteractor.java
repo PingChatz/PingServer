@@ -2,12 +2,10 @@ package chat.ping.main.usecase.auth.register;
 
 import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.user.UserFactory;
-import chat.ping.main.entity.user.exception.UserAlreadyExistsException;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.shared.validation.PasswordValidator;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
-import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 
 public class UserRegisterInteractor implements UserRegisterInputBoundary
 {

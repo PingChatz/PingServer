@@ -3,6 +3,7 @@ package chat.ping.main.config;
 
 import chat.ping.main.entity.user.UserFactory;
 import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
+import chat.ping.main.infrastructure.auth.presenter.UserLoginPresenter;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.infrastructure.security.JWTUtils;
 import chat.ping.main.usecase.auth.login.UserLoginInteractor;
