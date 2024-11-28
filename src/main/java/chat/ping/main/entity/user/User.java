@@ -6,14 +6,14 @@ public class User
     // properties
     private final String email;
     private final String username;
-    private final String password;
+    private final String passwordHash;
 
     // Constructor
-    public User(String email, String username, String password)
+    public User(String email, String username, String passwordHash)
     {
         this.email = email;
         this.username = username;
-        this.password = password;
+        this.passwordHash = passwordHash;
     }
 
     public String getEmail()
@@ -26,8 +26,8 @@ public class User
         return username;
     }
 
-    public String getPassword()
+    public String getPasswordHash()
     {
-        return password;
+        return passwordHash;
     }
 }

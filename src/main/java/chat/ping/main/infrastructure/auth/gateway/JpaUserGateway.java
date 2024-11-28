@@ -3,6 +3,8 @@ package chat.ping.main.infrastructure.auth.gateway;
 import chat.ping.main.entity.user.User;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class JpaUserGateway implements UserAuthDsGateway
 {
@@ -26,9 +28,31 @@ public class JpaUserGateway implements UserAuthDsGateway
     }
 
     @Override
+    public Optional<User> findByUsername(String username)
+    {
+        return userRepository.findByUsername(username)
+                .map(userDataMapper -> new User(
+                        userDataMapper.getEmail(),
+                        userDataMapper.getUsername(),
+                        userDataMapper.getPasswordHash()
+                ));
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email)
+    {
+        return userRepository.findByEmail(email)
+                .map(userDataMapper -> new User(
+                        userDataMapper.getEmail(),
+                        userDataMapper.getUsername(),
+                        userDataMapper.getPasswordHash()
+                ));
+    }
+
+    @Override
     public void save(User user)
     {
-        UserDataMapper userDataMapper = new UserDataMapper(user.getEmail(), user.getUsername(), user.getPassword());
+        UserDataMapper userDataMapper = new UserDataMapper(user.getEmail(), user.getUsername(), user.getPasswordHash());
         userRepository.save(userDataMapper);
     }
 }

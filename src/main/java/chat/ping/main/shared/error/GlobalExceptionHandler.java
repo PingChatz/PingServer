@@ -13,17 +13,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler
 {
-//    @ExceptionHandler(InvalidCredentialsException.class)
-//    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex)
-//    {
-//        ErrorResponse errorResponse = new ErrorResponse(
-//                "InvalidCredentials",
-//                ex.getMessage(),
-//                HttpStatus.UNAUTHORIZED.value()
-//        );
-//        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-//    }
-//
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException ex)
+    {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "InvalidCredentials",
+                ex.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse errorResponse = new ErrorResponse(

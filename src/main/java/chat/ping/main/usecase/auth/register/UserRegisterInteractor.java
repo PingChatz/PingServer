@@ -2,7 +2,6 @@ package chat.ping.main.usecase.auth.register;
 
 import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.user.UserFactory;
-import chat.ping.main.entity.user.exception.InvalidPasswordException;
 import chat.ping.main.entity.user.exception.UserAlreadyExistsException;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.shared.validation.PasswordValidator;
@@ -15,7 +14,9 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     private final UserRegisterPresenter presenter;
     private final UserFactory userFactory;
 
-    public UserRegisterInteractor(UserAuthDsGateway userAuthDsGateway, UserRegisterPresenter presenter, UserFactory userFactory)
+    public UserRegisterInteractor(UserAuthDsGateway userAuthDsGateway,
+                                  UserRegisterPresenter presenter,
+                                  UserFactory userFactory)
     {
         this.userAuthDsGateway = userAuthDsGateway;
         this.presenter = presenter;
@@ -26,7 +27,8 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
     public UserRegisterResponseModel register(UserRegisterRequestModel requestModel)
     {
         // make sure username us unique
-        if (userAuthDsGateway.existsByUsername(requestModel.getUsername())) {
+        if (userAuthDsGateway.existsByUsername(requestModel.getUsername()))
+        {
             throw new UserAlreadyExistsException("Username is already taken.");
         }
 
@@ -38,7 +40,6 @@ public class UserRegisterInteractor implements UserRegisterInputBoundary
 
         // run to make sure password is valid
         PasswordValidator.isValid(requestModel.getPassword());
-
 
         User newUser = userFactory.createUser(
                 requestModel.getEmail(),
