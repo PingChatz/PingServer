@@ -8,6 +8,7 @@ import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.infrastructure.messaging.gateway.messages.MessageGateway;
 import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
 import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
 
 public class SendMessageInteractor implements SendMessageInputBoundary
 {
@@ -71,6 +72,13 @@ public class SendMessageInteractor implements SendMessageInputBoundary
 
         messageGateway.saveMessage(message);
 
-        presenter.prepareSuccessView();
+        // Prepare MessageDTO
+        MessageDTO messageDTO = new MessageDTO();
+        messageDTO.setMessageId(message.getMessageId());
+        messageDTO.setSender(message.getSender().getUsername());
+        messageDTO.setContent(message.getContent());
+        messageDTO.setTimestamp(message.getTimestamp());
+
+        presenter.prepareSuccessView(messageDTO);
     }
 }

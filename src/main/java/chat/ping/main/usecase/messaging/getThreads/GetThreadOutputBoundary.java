@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface GetThreadOutputBoundary
 {
-    void prepareSuccessView(List<ThreadDTO> threads);
+    void prepareSuccessView(String username, List<ThreadDTO> threads);
 
     void prepareFailureView(String errorMessage);
 }

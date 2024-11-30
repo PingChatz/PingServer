@@ -38,6 +38,6 @@ public class GetThreadsInteractor implements GetThreadsInputBoundary
             return dto;
         }).collect(Collectors.toList());
 
-        presenter.prepareSuccessView(threadDTOs);
+        presenter.prepareSuccessView(username, threadDTOs);
     }
 }

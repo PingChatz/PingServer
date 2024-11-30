@@ -1,6 +1,7 @@
 package chat.ping.main.infrastructure.messaging.presenter;
 
 import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
 import chat.ping.main.usecase.messaging.sendMessage.SendMessageOutputBoundary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,9 @@ public class SendMessagePresenter implements SendMessageOutputBoundary
     private ResponseEntity<?> responseEntity;
 
     @Override
-    public void prepareSuccessView()
+    public void prepareSuccessView(MessageDTO messageDTO)
     {
-        Map<String, String> response = Map.of("message", "Message sent successfully.");
-        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(response);
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(messageDTO);
     }
 
     @Override

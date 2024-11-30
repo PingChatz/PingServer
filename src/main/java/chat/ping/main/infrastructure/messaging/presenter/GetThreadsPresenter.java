@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class GetThreadsPresenter implements GetThreadOutputBoundary
@@ -15,9 +17,12 @@ public class GetThreadsPresenter implements GetThreadOutputBoundary
     private ResponseEntity<?> responseEntity;
 
     @Override
-    public void prepareSuccessView(List<ThreadDTO> threads)
+    public void prepareSuccessView(String username, List<ThreadDTO> threads)
     {
-        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(threads);
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", username);
+        response.put("threads", threads);
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @Override
@@ -32,3 +37,4 @@ public class GetThreadsPresenter implements GetThreadOutputBoundary
         return responseEntity;
     }
 }
+

@@ -44,5 +44,10 @@ public abstract class AbstractMessage
         this.timestamp = timestamp;
     }
 
+    public void setMessageId(Long messageId)
+    {
+        this.messageId = messageId;
+    }
+
     public abstract String getContent();
 }

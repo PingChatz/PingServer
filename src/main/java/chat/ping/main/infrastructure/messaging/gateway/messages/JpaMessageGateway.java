@@ -25,17 +25,19 @@ public class JpaMessageGateway implements MessageGateway
     @Override
     public List<AbstractMessage> getMessagesForThread(Long threadId)
     {
-        return messageRepository.findByThreadId(threadId).stream().map(message ->
+        return messageRepository.findByThreadId(threadId).stream().map(messageDataMapper ->
         {
             MessageThread thread = threadGateway.findThreadById(threadId)
                     .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
 
-            User sender = new User(message.getSender(), null, null);
+            User sender = new User(messageDataMapper.getSender());
 
-            TextMessage textMessage = new TextMessage(thread, sender, message.getContent());
-            textMessage.setTimestamp(message.getTimestamp());
+            TextMessage textMessage = new TextMessage(thread, sender, messageDataMapper.getContent());
+            textMessage.setTimestamp(messageDataMapper.getTimestamp());
+            textMessage.setMessageId(messageDataMapper.getId()); // Set messageId here
             return textMessage;
         }).collect(Collectors.toList());
+
     }
 
     @Override
@@ -47,7 +49,7 @@ public class JpaMessageGateway implements MessageGateway
                 message.getContent(),
                 message.getTimestamp()
         );
-
-        messageRepository.save(dataMapper);
+        MessageDataMapper savedDataMapper = messageRepository.save(dataMapper);
+        message.setMessageId(savedDataMapper.getId()); // Set messageId after saving
     }
 }
