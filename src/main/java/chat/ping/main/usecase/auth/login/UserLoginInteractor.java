@@ -1,11 +1,13 @@
 package chat.ping.main.usecase.auth.login;
-import chat.ping.main.infrastructure.security.exception.InvalidCredentialsException;
+
 import chat.ping.main.entity.user.User;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.infrastructure.security.JWTUtils;
+import chat.ping.main.infrastructure.security.exception.InvalidCredentialsException;
 import chat.ping.main.shared.validation.EmailValidator;
 import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.util.Map;
 
 
@@ -35,7 +37,8 @@ public class UserLoginInteractor implements UserLoginInputBoundary
 
         User user;
 
-        try {
+        try
+        {
             // Fetch user by email or username
             user = fetchUserByUsernameOrEmail(usernameOrEmail);
         } catch (InvalidCredentialsException e)
@@ -45,7 +48,8 @@ public class UserLoginInteractor implements UserLoginInputBoundary
         }
 
         // Validate the password
-        if (!passwordEncoder.matches(requestModel.getPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(requestModel.getPassword(), user.getPasswordHash()))
+        {
             presenter.prepareInvalidCredentialsView("Invalid username/email or password.");
             return;
         }
@@ -57,7 +61,8 @@ public class UserLoginInteractor implements UserLoginInputBoundary
         presenter.prepareSuccessView(authToken, user.getUsername());
     }
 
-    private User fetchUserByUsernameOrEmail(String usernameOrEmail) {
+    private User fetchUserByUsernameOrEmail(String usernameOrEmail)
+    {
         if (EmailValidator.isValid(usernameOrEmail))
         {
             return userAuthDsGateway.findByEmail(usernameOrEmail)

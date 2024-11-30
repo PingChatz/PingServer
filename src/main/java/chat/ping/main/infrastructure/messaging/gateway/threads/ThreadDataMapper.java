@@ -1,6 +1,7 @@
 package chat.ping.main.infrastructure.messaging.gateway.threads;
 
 import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,34 +24,43 @@ public class ThreadDataMapper
     private List<String> participants = new ArrayList<>();
 
     // Default constructor for JPA
-    public ThreadDataMapper() {}
+    public ThreadDataMapper()
+    {
+    }
 
-    public ThreadDataMapper(String name, List<String> participants) {
+    public ThreadDataMapper(String name, List<String> participants)
+    {
         this.name = name;
         this.participants = participants;
     }
 
-    public Long getId() {
+    public Long getId()
+    {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public List<String> getParticipants() {
-        return participants;
-    }
-
-    public void setId(Long id) {
+    public void setId(Long id)
+    {
         this.id = id;
     }
 
-    public void setName(String name) {
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
         this.name = name;
     }
 
-    public void setParticipants(List<String> participants) {
+    public List<String> getParticipants()
+    {
+        return participants;
+    }
+
+    public void setParticipants(List<String> participants)
+    {
         this.participants = participants;
     }
 }

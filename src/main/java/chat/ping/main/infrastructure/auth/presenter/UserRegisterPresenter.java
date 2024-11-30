@@ -25,7 +25,8 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
     }
 
     @Override
-    public void prepareUsernameAlreadyExistsView(String username) {
+    public void prepareUsernameAlreadyExistsView(String username)
+    {
         ErrorResponse errorResponse = new ErrorResponse(
                 "UsernameAlreadyExists",
                 "The username '" + username + "' is already taken."
@@ -34,7 +35,8 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
     }
 
     @Override
-    public void prepareEmailAlreadyExistsView(String email) {
+    public void prepareEmailAlreadyExistsView(String email)
+    {
         ErrorResponse errorResponse = new ErrorResponse(
                 "EmailAlreadyExists",
                 "The email '" + email + "' is already registered."
@@ -43,13 +45,15 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
     }
 
     @Override
-    public void prepareInvalidPasswordView(String errorMessage) {
+    public void prepareInvalidPasswordView(String errorMessage)
+    {
         ErrorResponse errorResponse = new ErrorResponse("InvalidPassword", errorMessage);
         this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @Override
-    public void prepareInvalidEmailFormatView(String email) {
+    public void prepareInvalidEmailFormatView(String email)
+    {
         ErrorResponse errorResponse = new ErrorResponse(
                 "InvalidEmailFormat",
                 "The email '" + email + "' is not in a valid format."
@@ -57,7 +61,8 @@ public class UserRegisterPresenter implements UserRegisterOutputBoundary
         this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    public ResponseEntity<?> getResponseEntity() {
+    public ResponseEntity<?> getResponseEntity()
+    {
         return responseEntity;
     }
 }

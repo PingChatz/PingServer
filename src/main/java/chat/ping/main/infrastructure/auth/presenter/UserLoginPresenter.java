@@ -17,7 +17,7 @@ public class UserLoginPresenter implements UserLoginOutputBoundary
     {
         UserLoginResponseModel userLoginResponseModel = new UserLoginResponseModel(
                 authToken,
-                 username,
+                username,
                 "Login Successful!"
         );
 

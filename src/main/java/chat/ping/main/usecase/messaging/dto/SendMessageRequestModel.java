@@ -8,10 +8,12 @@ public class SendMessageRequestModel
     private String content;
 
     // Constructors, getters, and setters
-    public SendMessageRequestModel() {
+    public SendMessageRequestModel()
+    {
     }
 
-    public SendMessageRequestModel(Long threadId, String senderUsername, String messageType, String content) {
+    public SendMessageRequestModel(Long threadId, String senderUsername, String messageType, String content)
+    {
         this.threadId = threadId;
         this.senderUsername = senderUsername;
         this.messageType = messageType;
@@ -29,6 +31,11 @@ public class SendMessageRequestModel
         return senderUsername;
     }
 
+    public void setSenderUsername(String senderUsername)
+    {
+        this.senderUsername = senderUsername;
+    }
+
     public String getContent()
     {
         return content;
@@ -37,10 +44,5 @@ public class SendMessageRequestModel
     public String getMessageType()
     {
         return messageType;
-    }
-
-    public void setSenderUsername(String senderUsername)
-    {
-        this.senderUsername = senderUsername;
     }
 }

@@ -7,8 +7,8 @@ import chat.ping.main.entity.user.User;
 import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
 import chat.ping.main.infrastructure.messaging.gateway.messages.MessageGateway;
 import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
-import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
 import chat.ping.main.usecase.messaging.dto.MessageDTO;
+import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
 
 public class SendMessageInteractor implements SendMessageInputBoundary
 {
@@ -63,9 +63,11 @@ public class SendMessageInteractor implements SendMessageInputBoundary
 
         // Create message based on messageType
         AbstractMessage message;
-        if ("text".equalsIgnoreCase(requestModel.getMessageType())) {
+        if ("text".equalsIgnoreCase(requestModel.getMessageType()))
+        {
             message = messageFactory.createTextMessage(requestModel.getContent(), sender, thread);
-        } else {
+        } else
+        {
             presenter.prepareFailureView("Unsupported message type.");
             return;
         }

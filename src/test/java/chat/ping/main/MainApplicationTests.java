@@ -6,10 +6,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 // Tests will be here
 
 @SpringBootTest
-class MainApplicationTests {
+class MainApplicationTests
+{
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads()
+    {
+    }
 
 }

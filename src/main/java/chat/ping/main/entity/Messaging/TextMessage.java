@@ -16,8 +16,6 @@ public class TextMessage extends AbstractMessage
     }
 
 
-
-
     @Override
     public String getContent()
     {

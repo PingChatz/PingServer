@@ -1,6 +1,7 @@
 package chat.ping.main.infrastructure.messaging.gateway.messages;
 
 import jakarta.persistence.*;
+
 import java.util.Date;
 
 @Entity
@@ -26,7 +27,9 @@ public class MessageDataMapper
     private Date timestamp;
 
     // Default constructor for JPA
-    public MessageDataMapper() {}
+    public MessageDataMapper()
+    {
+    }
 
     public MessageDataMapper(Long threadId, String sender, String content, Date timestamp)
     {
@@ -36,23 +39,28 @@ public class MessageDataMapper
         this.timestamp = timestamp;
     }
 
-    public Long getId() {
+    public Long getId()
+    {
         return id;
     }
 
-    public Long getThreadId() {
+    public Long getThreadId()
+    {
         return threadId;
     }
 
-    public String getSender() {
+    public String getSender()
+    {
         return sender;
     }
 
-    public String getContent() {
+    public String getContent()
+    {
         return content;
     }
 
-    public Date getTimestamp() {
+    public Date getTimestamp()
+    {
         return timestamp;
     }
 }

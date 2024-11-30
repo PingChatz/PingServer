@@ -2,14 +2,15 @@ package chat.ping.main.infrastructure.security;
 
 import chat.ping.main.infrastructure.auth.gateway.JpaUserRepository;
 import chat.ping.main.infrastructure.auth.gateway.UserDataMapper;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.userdetails.User;
 
 @Service
-public class UserDetailsServiceImplementation implements UserDetailsService {
+public class UserDetailsServiceImplementation implements UserDetailsService
+{
 
     private final JpaUserRepository userRepository;
 

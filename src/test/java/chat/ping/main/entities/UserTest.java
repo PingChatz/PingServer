@@ -2,11 +2,12 @@ package chat.ping.main.entities;
 
 // UserTest.java
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-
-import chat.ping.main.entity.user.User;
 import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.user.User;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UserTest
 {

@@ -3,7 +3,6 @@ package chat.ping.main.infrastructure.auth.controller;
 
 import chat.ping.main.infrastructure.auth.presenter.UserLoginPresenter;
 import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
-import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
 import chat.ping.main.usecase.auth.login.UserLoginInputBoundary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

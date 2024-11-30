@@ -45,7 +45,8 @@ public class GetMessageInteractor implements GetMessagesInputBoundary
 
         List<AbstractMessage> messages = messageGateway.getMessagesForThread(threadId);
 
-        List<MessageDTO> messageDTOs = messages.stream().map(message -> {
+        List<MessageDTO> messageDTOs = messages.stream().map(message ->
+        {
             MessageDTO dto = new MessageDTO();
             dto.setMessageId(message.getMessageId());
             dto.setSender(message.getSender().getUsername());

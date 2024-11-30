@@ -2,7 +2,6 @@ package chat.ping.main.infrastructure.auth.controller;
 
 import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
 import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
-import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
 import chat.ping.main.usecase.auth.register.UserRegisterInputBoundary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

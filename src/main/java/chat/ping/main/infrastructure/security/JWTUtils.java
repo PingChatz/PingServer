@@ -25,7 +25,7 @@ public class JWTUtils
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    public String generateToken(@NotNull String username,  Map<String, Object> claims)
+    public String generateToken(@NotNull String username, Map<String, Object> claims)
     {
         return Jwts.builder()
                 .setClaims(claims)
@@ -57,8 +57,7 @@ public class JWTUtils
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-        }
-        catch (JwtException e)
+        } catch (JwtException e)
         {
             throw new InvalidTokenException("Invalid JWT Token");
         }

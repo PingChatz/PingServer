@@ -24,6 +24,11 @@ public abstract class AbstractMessage
         return messageId;
     }
 
+    public void setMessageId(Long messageId)
+    {
+        this.messageId = messageId;
+    }
+
     public User getSender()
     {
         return sender;
@@ -42,11 +47,6 @@ public abstract class AbstractMessage
     public void setTimestamp(Date timestamp)
     {
         this.timestamp = timestamp;
-    }
-
-    public void setMessageId(Long messageId)
-    {
-        this.messageId = messageId;
     }
 
     public abstract String getContent();
