@@ -130,19 +130,6 @@
 			<version>2.1.0</version>
 		</dependency>
 
-<!--		&lt;!&ndash; Spring Boot Test Starter &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.boot</groupId>-->
-<!--			<artifactId>spring-boot-starter-test</artifactId>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
-
-<!--		&lt;!&ndash; JUnit Jupiter (part of Spring Boot Starter Test) &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>org.junit.jupiter</groupId>-->
-<!--			<artifactId>junit-jupiter</artifactId>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
 
 	</dependencies>
 
