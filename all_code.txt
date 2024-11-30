@@ -1147,22 +1147,6 @@ public class UserRegisterController
 }
 
 
-===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/formatter/UserLoginResponseFormatter.java =====
-package chat.ping.main.infrastructure.auth.formatter;
-
-public class UserLoginResponseFormatter
-{
-}
-
-
-===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/formatter/UserRegisterResponseFormatter.java =====
-package chat.ping.main.infrastructure.auth.formatter;
-
-public class UserRegisterResponseFormatter
-{
-}
-
-
 ===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/gateway/JpaUserRepository.java =====
 package chat.ping.main.infrastructure.auth.gateway;
 
@@ -2499,12 +2483,6 @@ public class GetThreadsInteractor implements GetThreadsInputBoundary
     public void getThreads(String username)
     {
         List<MessageThread> threads = threadGateway.findThreadsByUsername(username);
-
-        if (threads.isEmpty())
-        {
-            presenter.prepareFailureView("No threads found for user: " + username);
-            return;
-        }
 
         List<ThreadDTO> threadDTOs = threads.stream().map(thread ->
         {
