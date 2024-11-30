@@ -23,12 +23,6 @@ public class GetThreadsInteractor implements GetThreadsInputBoundary
     {
         List<MessageThread> threads = threadGateway.findThreadsByUsername(username);
 
-        if (threads.isEmpty())
-        {
-            presenter.prepareFailureView("No threads found for user: " + username);
-            return;
-        }
-
         List<ThreadDTO> threadDTOs = threads.stream().map(thread ->
         {
             ThreadDTO dto = new ThreadDTO();
