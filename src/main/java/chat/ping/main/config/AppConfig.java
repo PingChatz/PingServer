@@ -126,8 +126,8 @@ public class AppConfig
 
     @Bean
     public GetMessageInteractor getMessagesInteractor(MessageGateway messageGateway,
-                                                       ThreadGateway threadGateway,
-                                                       GetMessagesPresenter presenter)
+                                                      ThreadGateway threadGateway,
+                                                      GetMessagesPresenter presenter)
     {
         return new GetMessageInteractor(messageGateway, threadGateway, presenter);
     }
@@ -140,5 +140,11 @@ public class AppConfig
                                                        MessageFactory messageFactory)
     {
         return new SendMessageInteractor(messageGateway, threadGateway, userAuthDsGateway, presenter, messageFactory);
+    }
+
+    @Bean
+    public JWTUtils jwtUtils()
+    {
+        return new JWTUtils();
     }
 }
