@@ -1,0 +1,2791 @@
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/MainApplication.java =====
+package chat.ping.main;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+// Starting point of the application
+@SpringBootApplication
+public class MainApplication
+{
+
+	public static void main(String[] args)
+	{
+		SpringApplication.run(MainApplication.class, args);
+	}
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/config/SecurityFilterConfig.java =====
+package chat.ping.main.config;
+
+
+import chat.ping.main.infrastructure.security.JWTAuthFilter;
+import chat.ping.main.infrastructure.security.UserDetailsServiceImplementation;
+import chat.ping.main.config.SecurityConfig.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+public class SecurityFilterConfig
+{
+
+    private final JWTAuthFilter jwtAuthFilter;
+    private final UserDetailsServiceImplementation userDetailsService;
+    private final PasswordEncoder passwordEncoder;
+
+    public SecurityFilterConfig(JWTAuthFilter jwtAuthFilter, UserDetailsServiceImplementation userDetailsService, PasswordEncoder passwordEncoder)
+    {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
+    {
+        http
+                .csrf(AbstractHttpConfigurer::disable) // disable CSRF
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // stateless session
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/hello").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated() // All other requests require authentication
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider()
+    {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        return authenticationProvider;
+    }
+
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/config/SecurityConfig.java =====
+package chat.ping.main.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+
+@Configuration
+public class SecurityConfig
+{
+    @Bean
+    public PasswordEncoder passwordEncoder()
+    {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/config/AppConfig.java =====
+package chat.ping.main.config;
+
+
+import chat.ping.main.entity.MessageThread.MessageThreadFactory;
+import chat.ping.main.entity.Messaging.MessageFactory;
+import chat.ping.main.entity.user.UserFactory;
+import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.auth.presenter.UserLoginPresenter;
+import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
+import chat.ping.main.infrastructure.messaging.gateway.messages.MessageGateway;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import chat.ping.main.infrastructure.messaging.presenter.CreateThreadPresenter;
+import chat.ping.main.infrastructure.messaging.presenter.GetMessagesPresenter;
+import chat.ping.main.infrastructure.messaging.presenter.GetThreadsPresenter;
+import chat.ping.main.infrastructure.messaging.presenter.SendMessagePresenter;
+import chat.ping.main.infrastructure.security.JWTUtils;
+import chat.ping.main.usecase.auth.login.UserLoginInteractor;
+import chat.ping.main.usecase.auth.register.UserRegisterInteractor;
+import chat.ping.main.usecase.messaging.createThreads.CreateThreadInteractor;
+import chat.ping.main.usecase.messaging.getMessages.GetMessageInteractor;
+import chat.ping.main.usecase.messaging.getThreads.GetThreadsInteractor;
+import chat.ping.main.usecase.messaging.sendMessage.SendMessageInteractor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class AppConfig
+{
+    @Bean
+    public UserRegisterPresenter userRegisterPresenter()
+    {
+        return new UserRegisterPresenter();
+    }
+
+    @Bean
+    public UserRegisterInteractor userRegisterInteractor(UserAuthDsGateway userAuthDsGateway,
+                                                         UserRegisterPresenter userRegisterPresenter,
+                                                         UserFactory userFactory)
+    {
+        return new UserRegisterInteractor(
+                userAuthDsGateway,
+                userRegisterPresenter,
+                userFactory
+        );
+    }
+
+    @Bean
+    public UserLoginPresenter userLoginPresenter()
+    {
+        return new UserLoginPresenter();
+    }
+
+    @Bean
+    public UserLoginInteractor userLoginInteractor(UserAuthDsGateway userAuthDsGateway,
+                                                   PasswordEncoder passwordEncoder,
+                                                   UserLoginPresenter userLoginPresenter,
+                                                   JWTUtils jwtUtils)
+    {
+        return new UserLoginInteractor(
+                userAuthDsGateway,
+                passwordEncoder,
+                userLoginPresenter,
+                jwtUtils
+        );
+    }
+
+    @Bean
+    public UserFactory userFactory(PasswordEncoder passwordEncoder)
+    {
+        return new UserFactory(passwordEncoder);
+    }
+
+
+    @Bean
+    public MessageThreadFactory messageThreadFactory()
+    {
+        return new MessageThreadFactory();
+    }
+
+    @Bean
+    public MessageFactory messageFactory()
+    {
+        return new MessageFactory();
+    }
+
+    @Bean
+    public CreateThreadPresenter createThreadPresenter()
+    {
+        return new CreateThreadPresenter();
+    }
+
+    @Bean
+    public GetThreadsPresenter getThreadsPresenter()
+    {
+        return new GetThreadsPresenter();
+    }
+
+    @Bean
+    public GetMessagesPresenter getMessagesPresenter()
+    {
+        return new GetMessagesPresenter();
+    }
+
+    @Bean
+    public SendMessagePresenter sendMessagePresenter()
+    {
+        return new SendMessagePresenter();
+    }
+
+    @Bean
+    public CreateThreadInteractor createThreadInteractor(ThreadGateway threadGateway,
+                                                         UserAuthDsGateway userAuthDsGateway,
+                                                         CreateThreadPresenter presenter,
+                                                         MessageThreadFactory threadFactory)
+    {
+        return new CreateThreadInteractor(threadGateway, userAuthDsGateway, presenter, threadFactory);
+    }
+
+    @Bean
+    public GetThreadsInteractor getThreadsInteractor(ThreadGateway threadGateway,
+                                                     GetThreadsPresenter presenter)
+    {
+        return new GetThreadsInteractor(threadGateway, presenter);
+    }
+
+    @Bean
+    public GetMessageInteractor getMessagesInteractor(MessageGateway messageGateway,
+                                                       ThreadGateway threadGateway,
+                                                       GetMessagesPresenter presenter)
+    {
+        return new GetMessageInteractor(messageGateway, threadGateway, presenter);
+    }
+
+    @Bean
+    public SendMessageInteractor sendMessageInteractor(MessageGateway messageGateway,
+                                                       ThreadGateway threadGateway,
+                                                       UserAuthDsGateway userAuthDsGateway,
+                                                       SendMessagePresenter presenter,
+                                                       MessageFactory messageFactory)
+    {
+        return new SendMessageInteractor(messageGateway, threadGateway, userAuthDsGateway, presenter, messageFactory);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/user/User.java =====
+package chat.ping.main.entity.user;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class User
+{
+
+    // properties
+    private final String email;
+    private final String username;
+    private final String passwordHash;
+
+    private List<MessageThread> messageThreadList = new ArrayList<>();
+
+    // Constructor
+    public User(String email, String username, String passwordHash)
+    {
+        this.email = email;
+        this.username = username;
+        this.passwordHash = passwordHash;
+    }
+
+    // Additional constructor
+    public User(String username)
+    {
+        this.email = null;
+        this.username = username;
+        this.passwordHash = null;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+
+    public String getPasswordHash()
+    {
+        return passwordHash;
+    }
+
+    public List<MessageThread> getThreadMessages()
+    {
+        return messageThreadList;
+    }
+
+    public void addThreadMessage(MessageThread newMessageThread)
+    {
+        this.messageThreadList.add(newMessageThread);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/user/UserFactory.java =====
+package chat.ping.main.entity.user;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+
+public class UserFactory
+{
+    private final PasswordEncoder passwordEncoder;
+
+    public UserFactory(PasswordEncoder passwordEncoder)
+    {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public User createUser(String email, String username, String password)
+    {
+        String hashedPassword = passwordEncoder.encode(password);
+        return new User(email, username, hashedPassword);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/MessageThread/MessageThreadFactory.java =====
+package chat.ping.main.entity.MessageThread;
+
+import chat.ping.main.entity.user.User;
+
+import java.util.List;
+
+public class MessageThreadFactory
+{
+    public MessageThread createThread(String threadName, List<User> participants)
+    {
+        MessageThread thread = new MessageThread(null, threadName);
+        thread.setParticipants(participants);
+        return thread;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/MessageThread/MessageThread.java =====
+package chat.ping.main.entity.MessageThread;
+
+import chat.ping.main.entity.Messaging.AbstractMessage;
+import chat.ping.main.entity.user.User;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MessageThread
+{
+    private Long threadID;
+    private String threadName;
+    private List<User> participants = new ArrayList<>();
+    private List<AbstractMessage> messages = new ArrayList<>();
+
+    public MessageThread(Long threadID, String threadName)
+    {
+        this.threadID = threadID;
+        this.threadName = threadName;
+    }
+
+    public Long getThreadID()
+    {
+        return threadID;
+    }
+
+    public void setThreadID(Long threadID)
+    {
+        this.threadID = threadID;
+    }
+
+    public String getThreadName()
+    {
+        return threadName;
+    }
+
+    public void setThreadName(String threadName)
+    {
+        this.threadName = threadName;
+    }
+
+    public List<User> getParticipants()
+    {
+        return participants;
+    }
+
+    public void setParticipants(List<User> participants)
+    {
+        this.participants = participants;
+    }
+
+    public List<AbstractMessage> getMessages()
+    {
+        return messages;
+    }
+
+    public void addMessage(AbstractMessage message)
+    {
+        this.messages.add(message);
+    }
+
+    public void addParticipant(User user)
+    {
+        this.participants.add(user);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/Messaging/MessageFactory.java =====
+package chat.ping.main.entity.Messaging;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.user.User;
+
+public class MessageFactory
+{
+    public TextMessage createTextMessage(String content, User sender, MessageThread thread)
+    {
+        return new TextMessage(thread, sender, content);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/Messaging/TextMessage.java =====
+package chat.ping.main.entity.Messaging;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.user.User;
+
+public class TextMessage extends AbstractMessage
+{
+    private String content;
+
+    public TextMessage(MessageThread messageThread,
+                       User sender,
+                       String content)
+    {
+        super(messageThread, sender);
+        this.content = content;
+    }
+
+
+
+
+    @Override
+    public String getContent()
+    {
+        return content;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/entity/Messaging/AbstractMessage.java =====
+package chat.ping.main.entity.Messaging;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.user.User;
+
+import java.util.Date;
+
+public abstract class AbstractMessage
+{
+    private Long messageId;
+    private User sender;
+    private MessageThread thread;
+    private Date timestamp;
+
+    public AbstractMessage(MessageThread thread, User sender)
+    {
+        this.sender = sender;
+        this.thread = thread;
+        this.timestamp = new Date(); // Defaults to current timestamp
+    }
+
+    public Long getMessageId()
+    {
+        return messageId;
+    }
+
+    public User getSender()
+    {
+        return sender;
+    }
+
+    public MessageThread getThread()
+    {
+        return thread;
+    }
+
+    public Date getTimestamp()
+    {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp)
+    {
+        this.timestamp = timestamp;
+    }
+
+    public void setMessageId(Long messageId)
+    {
+        this.messageId = messageId;
+    }
+
+    public abstract String getContent();
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/util/JsonUtil.java =====
+package chat.ping.main.shared.util;
+
+public class JsonUtil
+{
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/util/DateFormatter.java =====
+package chat.ping.main.shared.util;
+
+public class DateFormatter
+{
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/error/GlobalExceptionHandler.java =====
+package chat.ping.main.shared.error;
+
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
+public class GlobalExceptionHandler
+{
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "InternalServerError",
+                "An unexpected error occurred."
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/error/ErrorResponse.java =====
+package chat.ping.main.shared.error;
+
+public class ErrorResponse
+{
+    private String error;
+    private String message;
+
+    public ErrorResponse(String error, String message)
+    {
+        this.error = error;
+        this.message = message;
+    }
+
+    // Getters and Setters
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/validation/CredentialsValidator.java =====
+package chat.ping.main.shared.validation;
+
+public class CredentialsValidator
+{
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/validation/UniqueUsernameValidator.java =====
+package chat.ping.main.shared.validation;
+
+public class UniqueUsernameValidator
+{
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/validation/EmailValidator.java =====
+package chat.ping.main.shared.validation;
+
+import chat.ping.main.infrastructure.security.exception.InvalidCredentialsException;
+
+import java.util.regex.Pattern;
+
+public class EmailValidator
+{
+    // Regular expression for email validation
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    /**
+     * Checks if the given string is a valid email.
+     *
+     * @param email The email to validate.
+     * @return True if valid, false otherwise.
+     */
+    public static boolean isValid(String email)
+    {
+        if (email == null || email.trim().isEmpty())
+        {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    /**
+     * Validates the email and throws an exception if invalid.
+     *
+     * @param email The email to validate.
+     * @throws InvalidCredentialsException if email is invalid.
+     */
+    public static void validate(String email)
+    {
+        if (!isValid(email))
+        {
+            throw new InvalidCredentialsException("Invalid email format.");
+        }
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/shared/validation/PasswordValidator.java =====
+package chat.ping.main.shared.validation;
+
+import chat.ping.main.infrastructure.security.exception.InvalidPasswordException;
+import java.util.regex.Pattern;
+
+public class PasswordValidator
+{
+    // Define password rules
+    private static final int MIN_LENGTH = 8;
+    private static final int MAX_LENGTH = 32;
+    private static final String SPECIAL_CHARACTER_REGEX = "[^a-zA-Z0-9]";
+    private static final String DIGIT_REGEX = "\\d";
+    private static final String UPPERCASE_REGEX = "[A-Z]";
+    private static final String LOWERCASE_REGEX = "[a-z]";
+
+    public static boolean isValid(String password) {
+        // Null or empty check
+        if (password == null || password.trim().isEmpty()) {
+            throw new InvalidPasswordException("Password cannot be empty.");
+        }
+
+        // Length validation
+        if (password.length() < MIN_LENGTH || password.length() > MAX_LENGTH) {
+            throw new InvalidPasswordException("Password must be between " + MIN_LENGTH + " and " + MAX_LENGTH + " characters.");
+        }
+
+        // Special character validation
+        if (!Pattern.compile(SPECIAL_CHARACTER_REGEX).matcher(password).find()) {
+            throw new InvalidPasswordException("Password must contain at least one special character.");
+        }
+
+        // Digit validation
+        if (!Pattern.compile(DIGIT_REGEX).matcher(password).find()) {
+            throw new InvalidPasswordException("Password must contain at least one digit.");
+        }
+
+        // Uppercase letter validation
+        if (!Pattern.compile(UPPERCASE_REGEX).matcher(password).find()) {
+            throw new InvalidPasswordException("Password must contain at least one uppercase letter.");
+        }
+
+        // Lowercase letter validation
+        if (!Pattern.compile(LOWERCASE_REGEX).matcher(password).find()) {
+            throw new InvalidPasswordException("Password must contain at least one lowercase letter.");
+        }
+
+        return true;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/helloWorld/HelloWorldController.java =====
+package chat.ping.main.infrastructure.helloWorld;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloWorldController
+{
+    @GetMapping("/api/hello")
+    public String helloWorld()
+    {
+        return "Hello, World!";
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/JWTUtils.java =====
+package chat.ping.main.infrastructure.security;
+
+import chat.ping.main.infrastructure.security.exception.InvalidTokenException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.function.Function;
+
+@Component
+public class JWTUtils
+{
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    public String generateToken(@NotNull String username,  Map<String, Object> claims)
+    {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret)), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String extractUserName(@NotNull String token)
+    {
+
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver)
+    {
+        Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token)
+    {
+        try
+        {
+            return Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret)))
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        }
+        catch (JwtException e)
+        {
+            throw new InvalidTokenException("Invalid JWT Token");
+        }
+
+    }
+
+    public boolean isTokenValid(String token, String username)
+    {
+        if (!(username.equals(extractUserName(token)) && !isTokenExpired(token)))
+        {
+            throw new InvalidTokenException("Token Validation Failed: " + token);
+        }
+        return true;
+    }
+
+    private boolean isTokenExpired(String token)
+    {
+        return extractAllClaims(token).getExpiration().before(new Date());
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/JWTAuthFilter.java =====
+package chat.ping.main.infrastructure.security;
+
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+public class JWTAuthFilter extends OncePerRequestFilter
+{
+
+    private final JWTUtils jwtUtils;
+    private final UserDetailsService userDetailsService;
+
+    public JWTAuthFilter(JWTUtils jwtUtils, UserDetailsService userDetailsService)
+    {
+        this.jwtUtils = jwtUtils;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException
+    {
+        // collect the authorization header
+        String authorizationHeader = request.getHeader("Authorization");
+
+        // make sure the response is valid
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer "))
+        {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // collect the token and extract the user id
+        String jwtToken = authorizationHeader.substring(7);
+        String username = jwtUtils.extractUserName(jwtToken);
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null)
+        {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // make sure token is valid
+            if (jwtUtils.isTokenValid(jwtToken, username))
+            {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
+
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/exception/InvalidCredentialsException.java =====
+package chat.ping.main.infrastructure.security.exception;
+
+public class InvalidCredentialsException extends RuntimeException
+{
+    public InvalidCredentialsException(String message) {
+        super(message);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/exception/InvalidTokenException.java =====
+package chat.ping.main.infrastructure.security.exception;
+
+public class InvalidTokenException extends RuntimeException
+{
+    public InvalidTokenException(String message)
+    {
+        super(message);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/exception/InvalidPasswordException.java =====
+package chat.ping.main.infrastructure.security.exception;
+
+public class InvalidPasswordException extends RuntimeException
+{
+    public InvalidPasswordException(String message) {
+        super(message);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/security/UserDetailsServiceImplementation.java =====
+package chat.ping.main.infrastructure.security;
+
+import chat.ping.main.infrastructure.auth.gateway.JpaUserRepository;
+import chat.ping.main.infrastructure.auth.gateway.UserDataMapper;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.User;
+
+@Service
+public class UserDetailsServiceImplementation implements UserDetailsService {
+
+    private final JpaUserRepository userRepository;
+
+    public UserDetailsServiceImplementation(JpaUserRepository userRepository)
+    {
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Loads user-specific data by username or email for Spring Security.
+     *
+     * @param username The username provided during login.
+     * @return UserDetails containing user information (username, password, authorities).
+     * @throws UsernameNotFoundException if no user is found with the provided username/email.
+     */
+    @Override
+    public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException
+    {
+        // Attempt to find user by username or email
+        UserDataMapper user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with Username: " + username));
+
+        // Return UserDetails object expected by Spring Security
+        return User.builder()
+                .username(user.getUsername())
+                .password(user.getPasswordHash()) // Password must be hashed
+                .authorities("ROLE_USER") // Default role, can be adjusted based on user data
+                .build();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/presenter/UserRegisterPresenter.java =====
+package chat.ping.main.infrastructure.auth.presenter;
+
+import chat.ping.main.entity.user.User;
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
+import chat.ping.main.usecase.auth.register.UserRegisterOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UserRegisterPresenter implements UserRegisterOutputBoundary
+{
+
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(User user)
+    {
+        UserRegisterResponseModel responseModel = new UserRegisterResponseModel(
+                user.getUsername(),
+                "User registered successfully!"
+        );
+        this.responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(responseModel);
+    }
+
+    @Override
+    public void prepareUsernameAlreadyExistsView(String username) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "UsernameAlreadyExists",
+                "The username '" + username + "' is already taken."
+        );
+        this.responseEntity = ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @Override
+    public void prepareEmailAlreadyExistsView(String email) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "EmailAlreadyExists",
+                "The email '" + email + "' is already registered."
+        );
+        this.responseEntity = ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @Override
+    public void prepareInvalidPasswordView(String errorMessage) {
+        ErrorResponse errorResponse = new ErrorResponse("InvalidPassword", errorMessage);
+        this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @Override
+    public void prepareInvalidEmailFormatView(String email) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "InvalidEmailFormat",
+                "The email '" + email + "' is not in a valid format."
+        );
+        this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity() {
+        return responseEntity;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/presenter/UserLoginPresenter.java =====
+package chat.ping.main.infrastructure.auth.presenter;
+
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
+import chat.ping.main.usecase.auth.login.UserLoginOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UserLoginPresenter implements UserLoginOutputBoundary
+{
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(String authToken, String username)
+    {
+        UserLoginResponseModel userLoginResponseModel = new UserLoginResponseModel(
+                authToken,
+                 username,
+                "Login Successful!"
+        );
+
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(userLoginResponseModel);
+    }
+
+    @Override
+    public void prepareInvalidCredentialsView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Invalid Credentials",
+                errorMessage
+        );
+
+        this.responseEntity = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity()
+    {
+        return responseEntity;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/controller/UserLoginController.java =====
+package chat.ping.main.infrastructure.auth.controller;
+
+
+import chat.ping.main.infrastructure.auth.presenter.UserLoginPresenter;
+import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
+import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
+import chat.ping.main.usecase.auth.login.UserLoginInputBoundary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+public class UserLoginController
+{
+    private final UserLoginInputBoundary userLoginInputBoundary;
+    private final UserLoginPresenter presenter;
+
+    @Autowired
+    public UserLoginController(UserLoginInputBoundary userLoginInputBoundary,
+                               UserLoginPresenter presenter)
+    {
+        this.userLoginInputBoundary = userLoginInputBoundary;
+        this.presenter = presenter;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UserLoginRequestModel requestModel)
+    {
+        userLoginInputBoundary.login(requestModel);
+        return presenter.getResponseEntity();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/controller/UserRegisterController.java =====
+package chat.ping.main.infrastructure.auth.controller;
+
+import chat.ping.main.infrastructure.auth.presenter.UserRegisterPresenter;
+import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
+import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
+import chat.ping.main.usecase.auth.register.UserRegisterInputBoundary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+public class UserRegisterController
+{
+    private final UserRegisterInputBoundary userRegisterInputBoundary;
+    private final UserRegisterPresenter presenter;
+
+    @Autowired
+    public UserRegisterController(UserRegisterInputBoundary userRegisterInputBoundary,
+                                  UserRegisterPresenter presenter)
+    {
+        this.userRegisterInputBoundary = userRegisterInputBoundary;
+        this.presenter = presenter;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody UserRegisterRequestModel requestModel)
+    {
+        userRegisterInputBoundary.register(requestModel);
+
+        return presenter.getResponseEntity();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/gateway/JpaUserRepository.java =====
+package chat.ping.main.infrastructure.auth.gateway;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface JpaUserRepository extends JpaRepository<UserDataMapper, Long>
+{
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    Optional<UserDataMapper> findByUsername(String username);
+
+    Optional<UserDataMapper> findByEmail(String email);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/gateway/UserDataMapper.java =====
+package chat.ping.main.infrastructure.auth.gateway;
+
+import jakarta.persistence.*;
+
+import static jakarta.persistence.GenerationType.SEQUENCE;
+
+@Entity
+@Table(name = "users")
+public class UserDataMapper
+{
+    @Id
+    @SequenceGenerator(name = "user_sequence", sequenceName = "user_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = SEQUENCE, generator = "user_sequence")
+    @Column(name = "user_id", updatable = false, nullable = false)
+    private Long id;
+
+    @Column(name="username", nullable = false, unique = true)
+    private String username;
+
+    @Column(name="email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name="password_hash", nullable = false)
+    private String passwordHash;
+
+
+    // Constructors
+    public UserDataMapper()
+    {
+    }
+
+    public UserDataMapper(String email, String username, String passwordHash)
+    {
+        this.email = email;
+        this.username = username;
+        this.passwordHash = passwordHash;
+    }
+
+    public Long getId()
+    {
+        return id;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public String getPasswordHash()
+    {
+        return passwordHash;
+    }
+
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/gateway/JpaUserGateway.java =====
+package chat.ping.main.infrastructure.auth.gateway;
+
+import chat.ping.main.entity.user.User;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+@Component
+public class JpaUserGateway implements UserAuthDsGateway
+{
+    private final JpaUserRepository userRepository;
+
+    public JpaUserGateway(JpaUserRepository userRepository)
+    {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public boolean existsByUsername(String username)
+    {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Override
+    public boolean existsByEmail(String email)
+    {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username)
+    {
+        return userRepository.findByUsername(username)
+                .map(userDataMapper -> new User(
+                        userDataMapper.getEmail(),
+                        userDataMapper.getUsername(),
+                        userDataMapper.getPasswordHash()
+                ));
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email)
+    {
+        return userRepository.findByEmail(email)
+                .map(userDataMapper -> new User(
+                        userDataMapper.getEmail(),
+                        userDataMapper.getUsername(),
+                        userDataMapper.getPasswordHash()
+                ));
+    }
+
+    @Override
+    public void save(User user)
+    {
+        UserDataMapper userDataMapper = new UserDataMapper(user.getEmail(), user.getUsername(), user.getPasswordHash());
+        userRepository.save(userDataMapper);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/auth/gateway/UserAuthDsGateway.java =====
+package chat.ping.main.infrastructure.auth.gateway;
+
+
+import chat.ping.main.entity.user.User;
+
+import java.util.Optional;
+
+public interface UserAuthDsGateway
+{
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    Optional<User> findByUsername(String username);
+
+    Optional<User> findByEmail(String email);
+
+    void save(User user);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/presenter/GetMessagesPresenter.java =====
+package chat.ping.main.infrastructure.messaging.presenter;
+
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+import chat.ping.main.usecase.messaging.getMessages.GetMessagesOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class GetMessagesPresenter implements GetMessagesOutputBoundary
+{
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(List<MessageDTO> messages)
+    {
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(Map.of("messages", messages));
+    }
+
+
+    @Override
+    public void prepareFailureView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("GetMessagesFailed", errorMessage);
+        this.responseEntity = ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity()
+    {
+        return responseEntity;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/presenter/SendMessagePresenter.java =====
+package chat.ping.main.infrastructure.messaging.presenter;
+
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+import chat.ping.main.usecase.messaging.sendMessage.SendMessageOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+
+@Component
+public class SendMessagePresenter implements SendMessageOutputBoundary
+{
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(MessageDTO messageDTO)
+    {
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(messageDTO);
+    }
+
+    @Override
+    public void prepareFailureView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("SendMessageFailed", errorMessage);
+        this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity()
+    {
+        return responseEntity;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/presenter/GetThreadsPresenter.java =====
+package chat.ping.main.infrastructure.messaging.presenter;
+
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+import chat.ping.main.usecase.messaging.getThreads.GetThreadOutputBoundary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class GetThreadsPresenter implements GetThreadOutputBoundary
+{
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(String username, List<ThreadDTO> threads)
+    {
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", username);
+        response.put("threads", threads);
+        this.responseEntity = ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Override
+    public void prepareFailureView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("GetThreadsFailed", errorMessage);
+        this.responseEntity = ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity()
+    {
+        return responseEntity;
+    }
+}
+
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/presenter/CreateThreadPresenter.java =====
+package chat.ping.main.infrastructure.messaging.presenter;
+
+import chat.ping.main.shared.error.ErrorResponse;
+import chat.ping.main.usecase.messaging.createThreads.CreateThreadOutputBoundary;
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CreateThreadPresenter implements CreateThreadOutputBoundary
+{
+    private ResponseEntity<?> responseEntity;
+
+    @Override
+    public void prepareSuccessView(ThreadDTO threadDTO)
+    {
+        this.responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(threadDTO);
+    }
+
+    @Override
+    public void prepareFailureView(String errorMessage)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("CreateThreadFailed", errorMessage);
+        this.responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    public ResponseEntity<?> getResponseEntity()
+    {
+        return responseEntity;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/controller/ThreadController.java =====
+package chat.ping.main.infrastructure.messaging.controller;
+
+import chat.ping.main.infrastructure.messaging.presenter.CreateThreadPresenter;
+import chat.ping.main.infrastructure.messaging.presenter.GetThreadsPresenter;
+import chat.ping.main.usecase.messaging.createThreads.CreateThreadInputBoundary;
+import chat.ping.main.usecase.messaging.dto.CreateThreadRequestModel;
+import chat.ping.main.usecase.messaging.getThreads.GetThreadsInputBoundary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/threads")
+public class ThreadController
+{
+    private final CreateThreadInputBoundary createThreadInputBoundary;
+    private final GetThreadsInputBoundary getThreadsInputBoundary;
+    private final CreateThreadPresenter createThreadPresenter;
+    private final GetThreadsPresenter getThreadsPresenter;
+
+    @Autowired
+    public ThreadController(CreateThreadInputBoundary createThreadInputBoundary,
+                            GetThreadsInputBoundary getThreadsInputBoundary,
+                            CreateThreadPresenter createThreadPresenter,
+                            GetThreadsPresenter getThreadsPresenter)
+    {
+        this.createThreadInputBoundary = createThreadInputBoundary;
+        this.getThreadsInputBoundary = getThreadsInputBoundary;
+        this.createThreadPresenter = createThreadPresenter;
+        this.getThreadsPresenter = getThreadsPresenter;
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createThread(@RequestBody CreateThreadRequestModel requestModel, Authentication authentication)
+    {
+        String createdBy = authentication.getName();
+        requestModel.getParticipants().add(createdBy); // Ensure the creator is a participant
+        createThreadInputBoundary.createThread(requestModel);
+        return createThreadPresenter.getResponseEntity();
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getThreads(Authentication authentication)
+    {
+        String username = authentication.getName();
+        getThreadsInputBoundary.getThreads(username);
+        return getThreadsPresenter.getResponseEntity();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/controller/MessageController.java =====
+package chat.ping.main.infrastructure.messaging.controller;
+
+import chat.ping.main.infrastructure.messaging.presenter.GetMessagesPresenter;
+import chat.ping.main.infrastructure.messaging.presenter.SendMessagePresenter;
+import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
+import chat.ping.main.usecase.messaging.getMessages.GetMessagesInputBoundary;
+import chat.ping.main.usecase.messaging.sendMessage.SendMessageInputBoundary;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/messages")
+public class MessageController
+{
+    private final GetMessagesInputBoundary getMessagesInputBoundary;
+    private final SendMessageInputBoundary sendMessageInputBoundary;
+    private final GetMessagesPresenter getMessagesPresenter;
+    private final SendMessagePresenter sendMessagePresenter;
+
+    @Autowired
+    public MessageController(GetMessagesInputBoundary getMessagesInputBoundary,
+                             SendMessageInputBoundary sendMessageInputBoundary,
+                             GetMessagesPresenter getMessagesPresenter,
+                             SendMessagePresenter sendMessagePresenter)
+    {
+        this.getMessagesInputBoundary = getMessagesInputBoundary;
+        this.sendMessageInputBoundary = sendMessageInputBoundary;
+        this.getMessagesPresenter = getMessagesPresenter;
+        this.sendMessagePresenter = sendMessagePresenter;
+    }
+
+    @GetMapping("/{threadId}")
+    public ResponseEntity<?> getMessages(@PathVariable Long threadId, Authentication authentication)
+    {
+        String username = authentication.getName();
+        getMessagesInputBoundary.getMessages(threadId, username);
+        return getMessagesPresenter.getResponseEntity();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> sendMessage(@RequestBody SendMessageRequestModel requestModel, Authentication authentication)
+    {
+        String senderUsername = authentication.getName();
+        requestModel.setSenderUsername(senderUsername);
+        sendMessageInputBoundary.sendMessage(requestModel);
+        return sendMessagePresenter.getResponseEntity();
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/messages/MessageGateway.java =====
+package chat.ping.main.infrastructure.messaging.gateway.messages;
+
+import chat.ping.main.entity.Messaging.AbstractMessage;
+
+import java.util.List;
+
+public interface MessageGateway
+{
+    List<AbstractMessage> getMessagesForThread(Long threadId);
+
+    void saveMessage(AbstractMessage message);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/messages/JpaMessageRepository.java =====
+package chat.ping.main.infrastructure.messaging.gateway.messages;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface JpaMessageRepository extends JpaRepository<MessageDataMapper, Long>
+{
+    List<MessageDataMapper> findByThreadId(Long threadId);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/messages/MessageDataMapper.java =====
+package chat.ping.main.infrastructure.messaging.gateway.messages;
+
+import jakarta.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "messages")
+public class MessageDataMapper
+{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "message_id")
+    private Long id;
+
+    @Column(name = "thread_id", nullable = false)
+    private Long threadId;
+
+    @Column(name = "sender", nullable = false)
+    private String sender;
+
+    @Column(name = "content", nullable = false)
+    private String content;
+
+    @Column(name = "timestamp", nullable = false)
+    private Date timestamp;
+
+    // Default constructor for JPA
+    public MessageDataMapper() {}
+
+    public MessageDataMapper(Long threadId, String sender, String content, Date timestamp)
+    {
+        this.threadId = threadId;
+        this.sender = sender;
+        this.content = content;
+        this.timestamp = timestamp;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getThreadId() {
+        return threadId;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+}
+
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/messages/JpaMessageGateway.java =====
+package chat.ping.main.infrastructure.messaging.gateway.messages;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.Messaging.AbstractMessage;
+import chat.ping.main.entity.Messaging.TextMessage;
+import chat.ping.main.entity.user.User;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class JpaMessageGateway implements MessageGateway
+{
+    private final JpaMessageRepository messageRepository;
+    private final ThreadGateway threadGateway;
+
+    public JpaMessageGateway(JpaMessageRepository messageRepository, ThreadGateway threadGateway)
+    {
+        this.messageRepository = messageRepository;
+        this.threadGateway = threadGateway;
+    }
+
+    @Override
+    public List<AbstractMessage> getMessagesForThread(Long threadId)
+    {
+        return messageRepository.findByThreadId(threadId).stream().map(messageDataMapper ->
+        {
+            MessageThread thread = threadGateway.findThreadById(threadId)
+                    .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
+
+            User sender = new User(messageDataMapper.getSender());
+
+            TextMessage textMessage = new TextMessage(thread, sender, messageDataMapper.getContent());
+            textMessage.setTimestamp(messageDataMapper.getTimestamp());
+            textMessage.setMessageId(messageDataMapper.getId()); // Set messageId here
+            return textMessage;
+        }).collect(Collectors.toList());
+
+    }
+
+    @Override
+    public void saveMessage(AbstractMessage message)
+    {
+        MessageDataMapper dataMapper = new MessageDataMapper(
+                message.getThread().getThreadID(),
+                message.getSender().getUsername(),
+                message.getContent(),
+                message.getTimestamp()
+        );
+        MessageDataMapper savedDataMapper = messageRepository.save(dataMapper);
+        message.setMessageId(savedDataMapper.getId()); // Set messageId after saving
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/threads/JpaThreadRepository.java =====
+package chat.ping.main.infrastructure.messaging.gateway.threads;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface JpaThreadRepository extends JpaRepository<ThreadDataMapper, Long>
+{
+    List<ThreadDataMapper> findByParticipantsContaining(String username);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/threads/ThreadDataMapper.java =====
+package chat.ping.main.infrastructure.messaging.gateway.threads;
+
+import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "threads")
+public class ThreadDataMapper
+{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "thread_id")
+    private Long id;
+
+    @Column(name = "thread_name", nullable = false)
+    private String name;
+
+    @ElementCollection
+    @CollectionTable(name = "thread_participants", joinColumns = @JoinColumn(name = "thread_id"))
+    @Column(name = "username")
+    private List<String> participants = new ArrayList<>();
+
+    // Default constructor for JPA
+    public ThreadDataMapper() {}
+
+    public ThreadDataMapper(String name, List<String> participants) {
+        this.name = name;
+        this.participants = participants;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<String> getParticipants() {
+        return participants;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setParticipants(List<String> participants) {
+        this.participants = participants;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/threads/ThreadGateway.java =====
+package chat.ping.main.infrastructure.messaging.gateway.threads;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ThreadGateway
+{
+    Optional<MessageThread> findThreadById(Long threadId);
+
+    void saveThread(MessageThread thread);
+
+    List<MessageThread> findThreadsByUsername(String username);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/infrastructure/messaging/gateway/threads/JpaThreadGateway.java =====
+package chat.ping.main.infrastructure.messaging.gateway.threads;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.user.User;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Component
+public class JpaThreadGateway implements ThreadGateway
+{
+    private final JpaThreadRepository repository;
+
+    public JpaThreadGateway(JpaThreadRepository repository)
+    {
+        this.repository = repository;
+    }
+
+    @Override
+    public Optional<MessageThread> findThreadById(Long threadId)
+    {
+        return repository.findById(threadId).map(this::mapToDomain);
+    }
+
+    @Override
+    public void saveThread(MessageThread thread)
+    {
+        ThreadDataMapper dataMapper = new ThreadDataMapper(
+                thread.getThreadName(),
+                thread.getParticipants().stream().map(User::getUsername).collect(Collectors.toList())
+        );
+        // Save and get the saved entity with generated ID
+        ThreadDataMapper savedDataMapper = repository.save(dataMapper);
+        // Set the generated ID back to the domain object
+        thread.setThreadID(savedDataMapper.getId());
+    }
+
+    @Override
+    public List<MessageThread> findThreadsByUsername(String username)
+    {
+        return repository.findByParticipantsContaining(username)
+                .stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
+
+    private MessageThread mapToDomain(ThreadDataMapper dataMapper)
+    {
+        MessageThread domainThread = new MessageThread(
+                dataMapper.getId(),
+                dataMapper.getName()
+        );
+        domainThread.setParticipants(dataMapper.getParticipants().stream()
+                .map(User::new)
+                .collect(Collectors.toList()));
+        return domainThread;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/dto/UserRegisterRequestModel.java =====
+package chat.ping.main.usecase.auth.dto;
+
+public class UserRegisterRequestModel
+{
+    private final String username;
+    private final String password;
+    private final String email;
+
+    public UserRegisterRequestModel(String username, String password, String email)
+    {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+
+    public String getEmail()
+    {
+        return email;
+    }
+
+    public String getPassword()
+    {
+        return password;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/dto/UserRegisterResponseModel.java =====
+package chat.ping.main.usecase.auth.dto;
+
+public class UserRegisterResponseModel
+{
+
+    private final String username;
+    private final String message;
+
+    public UserRegisterResponseModel(String username, String message)
+    {
+        this.username = username;
+        this.message = message;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+
+    public String getMessage()
+    {
+        return message;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/dto/UserLoginRequestModel.java =====
+package chat.ping.main.usecase.auth.dto;
+
+public class UserLoginRequestModel
+{
+    private final String usernameOrEmail;
+    private final String password;
+
+
+    public UserLoginRequestModel(String usernameOrEmail, String password)
+    {
+        this.usernameOrEmail = usernameOrEmail;
+        this.password = password;
+    }
+
+    public String getUsernameOrEmail()
+    {
+        return usernameOrEmail;
+    }
+
+    public String getPassword()
+    {
+        return password;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/dto/UserLoginResponseModel.java =====
+package chat.ping.main.usecase.auth.dto;
+
+public class UserLoginResponseModel
+{
+    private final String authToken;
+    private final String username;
+    private final String message;
+
+    public UserLoginResponseModel(String authToken, String username, String message)
+    {
+        this.authToken = authToken;
+        this.username = username;
+        this.message = message;
+    }
+
+    public String getMessage()
+    {
+        return message;
+    }
+
+    public String getAuthToken()
+    {
+        return authToken;
+    }
+
+    public String getUsername()
+    {
+        return username;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/register/UserRegisterOutputBoundary.java =====
+package chat.ping.main.usecase.auth.register;
+
+import chat.ping.main.entity.user.User;
+
+
+/**
+ * Output boundary for the User Registration use case.
+ * Defines methods for preparing responses for different scenarios.
+ */
+public interface UserRegisterOutputBoundary
+{
+
+    /**
+     * Prepares the success response view for user registration.
+     *
+     * @param user The registered user entity.
+     */
+    void prepareSuccessView(User user);
+
+    /**
+     * Prepares the error response view when the username is already taken.
+     *
+     * @param username The username that is already taken.
+     */
+    void prepareUsernameAlreadyExistsView(String username);
+
+    /**
+     * Prepares the error response view when the email is already registered.
+     *
+     * @param email The email that is already registered.
+     */
+    void prepareEmailAlreadyExistsView(String email);
+
+    /**
+     * Prepares the error response view for an invalid password.
+     *
+     * @param errorMessage A detailed error message describing the issue.
+     */
+    void prepareInvalidPasswordView(String errorMessage);
+
+    /**
+     * Prepares the error response view for an invalid email format.
+     *
+     * @param email The email that has an invalid format.
+     */
+    void prepareInvalidEmailFormatView(String email);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/register/UserRegisterInteractor.java =====
+package chat.ping.main.usecase.auth.register;
+
+import chat.ping.main.entity.user.User;
+import chat.ping.main.entity.user.UserFactory;
+import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.security.exception.InvalidPasswordException;
+import chat.ping.main.shared.validation.EmailValidator;
+import chat.ping.main.shared.validation.PasswordValidator;
+import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
+
+public class UserRegisterInteractor implements UserRegisterInputBoundary
+{
+    private final UserAuthDsGateway userAuthDsGateway;
+    private final UserRegisterOutputBoundary presenter;
+    private final UserFactory userFactory;
+
+    public UserRegisterInteractor(UserAuthDsGateway userAuthDsGateway,
+                                  UserRegisterOutputBoundary presenter,
+                                  UserFactory userFactory)
+    {
+        this.userAuthDsGateway = userAuthDsGateway;
+        this.presenter = presenter;
+        this.userFactory = userFactory;
+    }
+
+    @Override
+    public void register(UserRegisterRequestModel requestModel)
+    {
+        // make sure username us unique
+        if (userAuthDsGateway.existsByUsername(requestModel.getUsername()))
+        {
+            presenter.prepareUsernameAlreadyExistsView(requestModel.getUsername());
+            return;
+        }
+
+        // make sure email is unique
+        if (userAuthDsGateway.existsByEmail(requestModel.getEmail()))
+        {
+            presenter.prepareEmailAlreadyExistsView(requestModel.getEmail());
+            return;
+        }
+
+        // Validate the email format
+        if (!EmailValidator.isValid(requestModel.getEmail()))
+        {
+            presenter.prepareInvalidEmailFormatView(requestModel.getEmail());
+            return;
+        }
+
+
+        // Validate the password
+        try
+        {
+            PasswordValidator.isValid(requestModel.getPassword());
+
+        } catch (InvalidPasswordException e)
+        {
+            presenter.prepareInvalidPasswordView(e.getMessage());
+            return;
+        }
+
+        User newUser = userFactory.createUser(
+                requestModel.getEmail(),
+                requestModel.getUsername(),
+                requestModel.getPassword()
+        );
+
+        userAuthDsGateway.save(newUser);
+
+        // Prepare the success view
+        presenter.prepareSuccessView(newUser);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/register/UserRegisterInputBoundary.java =====
+package chat.ping.main.usecase.auth.register;
+
+import chat.ping.main.usecase.auth.dto.UserRegisterRequestModel;
+import chat.ping.main.usecase.auth.dto.UserRegisterResponseModel;
+
+public interface UserRegisterInputBoundary
+{
+    void register(UserRegisterRequestModel requestModel);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/login/UserLoginInputBoundary.java =====
+package chat.ping.main.usecase.auth.login;
+
+import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
+import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
+
+public interface UserLoginInputBoundary
+{
+    void login(UserLoginRequestModel requestModel);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/login/UserLoginOutputBoundary.java =====
+package chat.ping.main.usecase.auth.login;
+
+import chat.ping.main.usecase.auth.dto.UserLoginResponseModel;
+
+public interface UserLoginOutputBoundary
+{
+    void prepareSuccessView(String authToken,String username);
+
+    void prepareInvalidCredentialsView(String errorMessage);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/login/exceptionHandler/InvalidTokenHandler.java =====
+package chat.ping.main.usecase.auth.login.exceptionHandler;
+
+
+import chat.ping.main.infrastructure.security.exception.InvalidTokenException;
+import chat.ping.main.shared.error.ErrorResponse;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class InvalidTokenHandler
+{
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex)
+    {
+        ErrorResponse errorResponse = new ErrorResponse("InvalidToken", ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/auth/login/UserLoginInteractor.java =====
+package chat.ping.main.usecase.auth.login;
+import chat.ping.main.infrastructure.security.exception.InvalidCredentialsException;
+import chat.ping.main.entity.user.User;
+import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.security.JWTUtils;
+import chat.ping.main.shared.validation.EmailValidator;
+import chat.ping.main.usecase.auth.dto.UserLoginRequestModel;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.Map;
+
+
+public class UserLoginInteractor implements UserLoginInputBoundary
+{
+    private final UserAuthDsGateway userAuthDsGateway;
+    private final PasswordEncoder passwordEncoder;
+    private final UserLoginOutputBoundary presenter;
+    private final JWTUtils jwtUtils;
+
+    public UserLoginInteractor(UserAuthDsGateway userAuthDsGateway,
+                               PasswordEncoder passwordEncoder,
+                               UserLoginOutputBoundary presenter,
+                               JWTUtils jwtUtils)
+    {
+        this.userAuthDsGateway = userAuthDsGateway;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
+        this.presenter = presenter;
+    }
+
+    @Override
+    public void login(UserLoginRequestModel requestModel)
+    {
+        // identify if the login is being done by the username or password
+        String usernameOrEmail = requestModel.getUsernameOrEmail();
+
+        User user;
+
+        try {
+            // Fetch user by email or username
+            user = fetchUserByUsernameOrEmail(usernameOrEmail);
+        } catch (InvalidCredentialsException e)
+        {
+            presenter.prepareInvalidCredentialsView("Invalid username/email or password.");
+            return;
+        }
+
+        // Validate the password
+        if (!passwordEncoder.matches(requestModel.getPassword(), user.getPasswordHash())) {
+            presenter.prepareInvalidCredentialsView("Invalid username/email or password.");
+            return;
+        }
+
+        // Generate JWT token
+        String authToken = jwtUtils.generateToken(user.getUsername(), Map.of());
+
+        // Prepare the success response
+        presenter.prepareSuccessView(authToken, user.getUsername());
+    }
+
+    private User fetchUserByUsernameOrEmail(String usernameOrEmail) {
+        if (EmailValidator.isValid(usernameOrEmail))
+        {
+            return userAuthDsGateway.findByEmail(usernameOrEmail)
+                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
+        } else
+        {
+            return userAuthDsGateway.findByUsername(usernameOrEmail)
+                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username/email or password."));
+        }
+    }
+
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/dto/SendMessageRequestModel.java =====
+package chat.ping.main.usecase.messaging.dto;
+
+public class SendMessageRequestModel
+{
+    private Long threadId;
+    private String senderUsername;
+    private String messageType;
+    private String content;
+
+    // Constructors, getters, and setters
+    public SendMessageRequestModel() {
+    }
+
+    public SendMessageRequestModel(Long threadId, String senderUsername, String messageType, String content) {
+        this.threadId = threadId;
+        this.senderUsername = senderUsername;
+        this.messageType = messageType;
+        this.content = content;
+    }
+
+
+    public Long getThreadId()
+    {
+        return threadId;
+    }
+
+    public String getSenderUsername()
+    {
+        return senderUsername;
+    }
+
+    public String getContent()
+    {
+        return content;
+    }
+
+    public String getMessageType()
+    {
+        return messageType;
+    }
+
+    public void setSenderUsername(String senderUsername)
+    {
+        this.senderUsername = senderUsername;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/dto/ThreadDTO.java =====
+package chat.ping.main.usecase.messaging.dto;
+
+import java.util.List;
+
+public class ThreadDTO
+{
+    private Long threadId;
+    private String threadName;
+    private List<String> participants;
+
+    // Getters and Setters
+    public Long getThreadId()
+    {
+        return threadId;
+    }
+
+    public void setThreadId(Long threadId)
+    {
+        this.threadId = threadId;
+    }
+
+    public String getThreadName()
+    {
+        return threadName;
+    }
+
+    public void setThreadName(String threadName)
+    {
+        this.threadName = threadName;
+    }
+
+    public List<String> getParticipants()
+    {
+        return participants;
+    }
+
+    public void setParticipants(List<String> participants)
+    {
+        this.participants = participants;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/dto/MessageDTO.java =====
+package chat.ping.main.usecase.messaging.dto;
+
+import java.util.Date;
+
+public class MessageDTO
+{
+    private Long messageId;
+    private String sender;
+    private String content;
+    private Date timestamp;
+
+    // Getters and Setters
+    public Long getMessageId()
+    {
+        return messageId;
+    }
+
+    public void setMessageId(Long messageId)
+    {
+        this.messageId = messageId;
+    }
+
+    public String getSender()
+    {
+        return sender;
+    }
+
+    public void setSender(String sender)
+    {
+        this.sender = sender;
+    }
+
+    public String getContent()
+    {
+        return content;
+    }
+
+    public void setContent(String content)
+    {
+        this.content = content;
+    }
+
+    public Date getTimestamp()
+    {
+        return timestamp;
+    }
+
+    public void setTimestamp(Date timestamp)
+    {
+        this.timestamp = timestamp;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/dto/CreateThreadRequestModel.java =====
+package chat.ping.main.usecase.messaging.dto;
+
+import java.util.List;
+
+public class CreateThreadRequestModel
+{
+    private String threadName;
+    private List<String> participants;
+
+    // Constructors, getters, and setters
+    public CreateThreadRequestModel()
+    {
+    }
+
+    public CreateThreadRequestModel(String threadName, List<String> participants)
+    {
+        this.threadName = threadName;
+        this.participants = participants;
+    }
+
+    public String getThreadName()
+    {
+        return threadName;
+    }
+
+    public List<String> getParticipants()
+    {
+        return participants;
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getThreads/GetThreadOutputBoundary.java =====
+package chat.ping.main.usecase.messaging.getThreads;
+
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+
+import java.util.List;
+
+public interface GetThreadOutputBoundary
+{
+    void prepareSuccessView(String username, List<ThreadDTO> threads);
+
+    void prepareFailureView(String errorMessage);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getThreads/GetThreadsInteractor.java =====
+package chat.ping.main.usecase.messaging.getThreads;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class GetThreadsInteractor implements GetThreadsInputBoundary
+{
+    private final ThreadGateway threadGateway;
+    private final GetThreadOutputBoundary presenter;
+
+    public GetThreadsInteractor(ThreadGateway threadGateway, GetThreadOutputBoundary presenter)
+    {
+        this.threadGateway = threadGateway;
+        this.presenter = presenter;
+    }
+
+    @Override
+    public void getThreads(String username)
+    {
+        List<MessageThread> threads = threadGateway.findThreadsByUsername(username);
+
+        List<ThreadDTO> threadDTOs = threads.stream().map(thread ->
+        {
+            ThreadDTO dto = new ThreadDTO();
+            dto.setThreadId(thread.getThreadID());
+            dto.setThreadName(thread.getThreadName());
+            dto.setParticipants(thread.getParticipants().stream().map(user -> user.getUsername()).collect(Collectors.toList()));
+            return dto;
+        }).collect(Collectors.toList());
+
+        presenter.prepareSuccessView(username, threadDTOs);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getThreads/GetThreadsInputBoundary.java =====
+package chat.ping.main.usecase.messaging.getThreads;
+
+public interface GetThreadsInputBoundary
+{
+    void getThreads(String username);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getMessages/GetMessageInteractor.java =====
+package chat.ping.main.usecase.messaging.getMessages;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.Messaging.AbstractMessage;
+import chat.ping.main.infrastructure.messaging.gateway.messages.MessageGateway;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class GetMessageInteractor implements GetMessagesInputBoundary
+{
+    private final MessageGateway messageGateway;
+    private final ThreadGateway threadGateway;
+    private final GetMessagesOutputBoundary presenter;
+
+    public GetMessageInteractor(MessageGateway messageGateway, ThreadGateway threadGateway, GetMessagesOutputBoundary presenter)
+    {
+        this.messageGateway = messageGateway;
+        this.threadGateway = threadGateway;
+        this.presenter = presenter;
+    }
+
+    @Override
+    public void getMessages(Long threadId, String username)
+    {
+        MessageThread thread = threadGateway.findThreadById(threadId)
+                .orElse(null);
+
+        if (thread == null)
+        {
+            presenter.prepareFailureView("Thread not found.");
+            return;
+        }
+
+        boolean isParticipant = thread.getParticipants().stream()
+                .anyMatch(user -> user.getUsername().equals(username));
+
+        if (!isParticipant)
+        {
+            presenter.prepareFailureView("User is not a participant in this thread.");
+            return;
+        }
+
+        List<AbstractMessage> messages = messageGateway.getMessagesForThread(threadId);
+
+        List<MessageDTO> messageDTOs = messages.stream().map(message -> {
+            MessageDTO dto = new MessageDTO();
+            dto.setMessageId(message.getMessageId());
+            dto.setSender(message.getSender().getUsername());
+            dto.setContent(message.getContent());
+            dto.setTimestamp(message.getTimestamp());
+            return dto;
+        }).collect(Collectors.toList());
+
+        presenter.prepareSuccessView(messageDTOs);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getMessages/GetMessagesOutputBoundary.java =====
+package chat.ping.main.usecase.messaging.getMessages;
+
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+
+import java.util.List;
+
+public interface GetMessagesOutputBoundary
+{
+    void prepareSuccessView(List<MessageDTO> messages);
+
+    void prepareFailureView(String errorMessage);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/getMessages/GetMessagesInputBoundary.java =====
+package chat.ping.main.usecase.messaging.getMessages;
+
+public interface GetMessagesInputBoundary
+{
+    void getMessages(Long threadId, String username);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/sendMessage/SendMessageOutputBoundary.java =====
+package chat.ping.main.usecase.messaging.sendMessage;
+
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+
+public interface SendMessageOutputBoundary
+{
+    void prepareSuccessView(MessageDTO messageDTO);
+
+    void prepareFailureView(String errorMessage);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/sendMessage/SendMessageInteractor.java =====
+package chat.ping.main.usecase.messaging.sendMessage;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.Messaging.AbstractMessage;
+import chat.ping.main.entity.Messaging.MessageFactory;
+import chat.ping.main.entity.user.User;
+import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.messaging.gateway.messages.MessageGateway;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
+import chat.ping.main.usecase.messaging.dto.MessageDTO;
+
+public class SendMessageInteractor implements SendMessageInputBoundary
+{
+    private final MessageGateway messageGateway;
+    private final ThreadGateway threadGateway;
+    private final UserAuthDsGateway userAuthDsGateway;
+    private final SendMessageOutputBoundary presenter;
+    private final MessageFactory messageFactory;
+
+    public SendMessageInteractor(MessageGateway messageGateway,
+                                 ThreadGateway threadGateway,
+                                 UserAuthDsGateway userAuthDsGateway,
+                                 SendMessageOutputBoundary presenter,
+                                 MessageFactory messageFactory)
+    {
+        this.messageGateway = messageGateway;
+        this.threadGateway = threadGateway;
+        this.userAuthDsGateway = userAuthDsGateway;
+        this.presenter = presenter;
+        this.messageFactory = messageFactory;
+    }
+
+    @Override
+    public void sendMessage(SendMessageRequestModel requestModel)
+    {
+        MessageThread thread = threadGateway.findThreadById(requestModel.getThreadId())
+                .orElse(null);
+
+        if (thread == null)
+        {
+            presenter.prepareFailureView("Thread not found.");
+            return;
+        }
+
+        User sender = userAuthDsGateway.findByUsername(requestModel.getSenderUsername())
+                .orElse(null);
+
+        if (sender == null)
+        {
+            presenter.prepareFailureView("Sender not found.");
+            return;
+        }
+
+        boolean isParticipant = thread.getParticipants().stream()
+                .anyMatch(user -> user.getUsername().equals(sender.getUsername()));
+
+        if (!isParticipant)
+        {
+            presenter.prepareFailureView("Sender is not a participant in this thread.");
+            return;
+        }
+
+        // Create message based on messageType
+        AbstractMessage message;
+        if ("text".equalsIgnoreCase(requestModel.getMessageType())) {
+            message = messageFactory.createTextMessage(requestModel.getContent(), sender, thread);
+        } else {
+            presenter.prepareFailureView("Unsupported message type.");
+            return;
+        }
+
+        messageGateway.saveMessage(message);
+
+        // Prepare MessageDTO
+        MessageDTO messageDTO = new MessageDTO();
+        messageDTO.setMessageId(message.getMessageId());
+        messageDTO.setSender(message.getSender().getUsername());
+        messageDTO.setContent(message.getContent());
+        messageDTO.setTimestamp(message.getTimestamp());
+
+        presenter.prepareSuccessView(messageDTO);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/sendMessage/SendMessageInputBoundary.java =====
+package chat.ping.main.usecase.messaging.sendMessage;
+
+import chat.ping.main.usecase.messaging.dto.SendMessageRequestModel;
+
+public interface SendMessageInputBoundary
+{
+    void sendMessage(SendMessageRequestModel requestModel);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/createThreads/CreateThreadInteractor.java =====
+package chat.ping.main.usecase.messaging.createThreads;
+
+import chat.ping.main.entity.MessageThread.MessageThread;
+import chat.ping.main.entity.MessageThread.MessageThreadFactory;
+import chat.ping.main.entity.user.User;
+import chat.ping.main.infrastructure.auth.gateway.UserAuthDsGateway;
+import chat.ping.main.infrastructure.messaging.gateway.threads.ThreadGateway;
+import chat.ping.main.usecase.messaging.dto.CreateThreadRequestModel;
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CreateThreadInteractor implements CreateThreadInputBoundary
+{
+    private final ThreadGateway threadGateway;
+    private final UserAuthDsGateway userAuthDsGateway;
+    private final CreateThreadOutputBoundary presenter;
+    private final MessageThreadFactory threadFactory;
+
+    public CreateThreadInteractor(ThreadGateway threadGateway,
+                                  UserAuthDsGateway userAuthDsGateway,
+                                  CreateThreadOutputBoundary presenter,
+                                  MessageThreadFactory threadFactory)
+    {
+        this.threadGateway = threadGateway;
+        this.userAuthDsGateway = userAuthDsGateway;
+        this.presenter = presenter;
+        this.threadFactory = threadFactory;
+    }
+
+    @Override
+    public void createThread(CreateThreadRequestModel requestModel)
+    {
+        // Validate participants
+        List<User> participants = requestModel.getParticipants().stream()
+                .map(username -> userAuthDsGateway.findByUsername(username).orElse(null))
+                .collect(Collectors.toList());
+
+        if (participants.contains(null))
+        {
+            presenter.prepareFailureView("One or more participants do not exist.");
+            return;
+        }
+
+        // Create thread
+        MessageThread thread = threadFactory.createThread(requestModel.getThreadName(), participants);
+        threadGateway.saveThread(thread);
+
+        // Prepare success view
+        ThreadDTO threadDTO = new ThreadDTO();
+        threadDTO.setThreadId(thread.getThreadID());
+        threadDTO.setThreadName(thread.getThreadName());
+        threadDTO.setParticipants(participants.stream().map(User::getUsername).collect(Collectors.toList()));
+
+        presenter.prepareSuccessView(threadDTO);
+    }
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/createThreads/CreateThreadInputBoundary.java =====
+package chat.ping.main.usecase.messaging.createThreads;
+
+import chat.ping.main.usecase.messaging.dto.CreateThreadRequestModel;
+
+public interface CreateThreadInputBoundary
+{
+    void createThread(CreateThreadRequestModel requestModel);
+}
+
+
+===== /Users/ali/Documents/Projects/207.nosync/PingServer/src/main/java/chat/ping/main/usecase/messaging/createThreads/CreateThreadOutputBoundary.java =====
+package chat.ping.main.usecase.messaging.createThreads;
+
+import chat.ping.main.usecase.messaging.dto.ThreadDTO;
+
+public interface CreateThreadOutputBoundary
+{
+    void prepareSuccessView(ThreadDTO threadDTO);
+
+    void prepareFailureView(String errorMessage);
+}
+
+
